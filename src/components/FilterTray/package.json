@@ -1,0 +1,43 @@
+{
+  "name": "filter-tray-component",
+  "version": "1.0.0",
+  "description": "A drag-and-drop filter tray component for React applications with responsive design and mobile support",
+  "main": "index.ts",
+  "types": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "react",
+    "filter",
+    "drag",
+    "responsive",
+    "typescript",
+    "tailwind",
+    "mobile",
+    "component"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "lucide-react": ">=0.263.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "FilterTray.tsx",
+    "types.ts",
+    "utils.ts",
+    "example.tsx",
+    "index.ts",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "your-repository-url"
+  }
+} 
