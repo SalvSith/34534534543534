@@ -1,0 +1,58 @@
+/* Load exact HvDTrial Brandon Grotesque fonts */
+@font-face {
+  font-family: 'HvDTrial Brandon Grotesque';
+  src: url('/fonts/HvDTrial_Brandon_Grotesque_regular-BF64a625c9311e1.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'HvDTrial Brandon Grotesque';
+  src: url('/fonts/HvDTrial_Brandon_Grotesque_medium-BF64a625c84a521.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'HvDTrial Brandon Grotesque';
+  src: url('/fonts/HvDTrial_Brandon_Grotesque_bold-BF64a625c9151d5.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Figma-specific font declarations */
+.font-hvd-regular {
+  font-family: 'HvDTrial Brandon Grotesque', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.font-hvd-medium {
+  font-family: 'HvDTrial Brandon Grotesque', sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.font-hvd-bold {
+  font-family: 'HvDTrial Brandon Grotesque', sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+* {
+  font-family: 'HvDTrial Brandon Grotesque', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f1f5f9;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} 
