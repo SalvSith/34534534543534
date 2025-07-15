@@ -336,40 +336,40 @@ export default function CardComboModal() {
 
                 {/* Tabs and Cards Section */}
                 <div className="bg-slate-100 box-border content-stretch flex flex-col min-h-[490px] items-start justify-start pb-6 pt-0 px-0 relative shrink-0 w-full">
-                    {/* Tabs Header */}
-                    <div className="bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 min-h-[58px] items-start lg:items-end justify-start px-3 sm:px-6 py-3 lg:py-0 relative shrink-0 w-full border-b border-slate-200">
-                        <div className="box-border content-stretch flex flex-row items-start justify-start p-0 relative shrink-0 overflow-x-auto w-full lg:w-auto">
-                            {/* Active Tab - All */}
-                            <div className="box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative shrink-0 border-b-2 border-purple-800">
-                                <CheckCheck className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" strokeWidth={2} />
-                                <div className="basis-0 font-hvd-medium grow leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[10px] sm:text-[12px] text-center text-slate-950 uppercase">
-                                    <p className="block leading-[20px]">ALL</p>
-                                </div>
+                                    {/* Tabs Header */}
+                <div className="bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 min-h-[58px] items-start lg:items-center justify-start px-3 sm:px-6 py-3 lg:py-0 relative shrink-0 w-full border-b border-slate-200">
+                    <div className="box-border content-stretch flex flex-row items-start justify-start p-0 relative shrink-0 overflow-x-auto w-full lg:w-auto lg:self-end">
+                        {/* Active Tab - All */}
+                        <div className="box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative shrink-0 border-b-2 border-purple-800">
+                            <CheckCheck className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" strokeWidth={2} />
+                            <div className="basis-0 font-hvd-medium grow leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[10px] sm:text-[12px] text-center text-slate-950 uppercase">
+                                <p className="block leading-[20px]">ALL</p>
                             </div>
-                            
-                            {/* Other tabs */}
-                            {[
-                                { icon: FileText, label: 'TEXT' },
-                                { icon: ImageIcon, label: 'IMAGE' },
-                                { icon: FileAudio, label: 'AUDIO' },
-                                { icon: FileVideo2, label: 'VIDEO' }
-                            ].map((tab, index) => {
-                                const Icon = tab.icon;
-                                return (
-                                    <div key={index} className="box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative shrink-0">
-                                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" strokeWidth={2} />
-                                        <div className="basis-0 font-hvd-medium grow leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[10px] sm:text-[12px] text-center text-slate-500 uppercase">
-                                            <p className="block leading-[20px]">{tab.label}</p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
                         </div>
                         
-                        <div className="basis-0 grow h-full min-h-px min-w-px shrink-0 hidden lg:block"/>
-                        
-                        {/* Search */}
-                        <div className="box-border content-stretch flex flex-row gap-4 h-full items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
+                        {/* Other tabs */}
+                        {[
+                            { icon: FileText, label: 'TEXT' },
+                            { icon: ImageIcon, label: 'IMAGE' },
+                            { icon: FileAudio, label: 'AUDIO' },
+                            { icon: FileVideo2, label: 'VIDEO' }
+                        ].map((tab, index) => {
+                            const Icon = tab.icon;
+                            return (
+                                <div key={index} className="box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative shrink-0">
+                                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" strokeWidth={2} />
+                                    <div className="basis-0 font-hvd-medium grow leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[10px] sm:text-[12px] text-center text-slate-500 uppercase">
+                                        <p className="block leading-[20px]">{tab.label}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    <div className="basis-0 grow h-full min-h-px min-w-px shrink-0 hidden lg:block"/>
+                    
+                    {/* Search */}
+                    <div className="box-border content-stretch flex flex-row gap-4 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
                             <div className="bg-white relative rounded-full shrink-0 w-full max-w-[300px] lg:w-[300px] border border-slate-200">
                                 <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden px-3 py-2.5 relative w-full">
                                     <div className="box-border content-stretch flex flex-row items-center justify-start pl-0 pr-2 py-0 relative shrink-0">
