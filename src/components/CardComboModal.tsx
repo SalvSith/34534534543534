@@ -198,7 +198,7 @@ function CardItem({
 
 export default function CardComboModal() {
     return (
-        <div className="bg-slate-50 relative rounded-3xl w-full max-w-7xl mx-auto min-h-[900px] h-auto">
+        <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] mx-auto min-h-[900px] h-auto">
             <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative w-full h-full">
                 {/* Header */}
                 <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 w-full">
@@ -253,7 +253,7 @@ export default function CardComboModal() {
                 {/* Content */}
                 <div className="relative shrink-0 w-full">
                     <div className="relative size-full">
-                        <div className="box-border content-stretch flex flex-col gap-4 items-start justify-start pb-6 pt-0 px-3 sm:px-6 relative w-full">
+                        <div className="box-border content-stretch flex flex-col gap-4 items-start justify-start pb-6 pt-0 px-3 sm:px-6 relative w-full max-w-[768px]">
                             <div className="font-hvd-regular leading-[24px] w-full not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                 <p className="block leading-[24px]">{`Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom. With silver hair cascading down his shoulders and piercing emerald eyes, he navigates the mystical realms with ease.`}</p>
                                 <br/>
@@ -395,22 +395,6 @@ export default function CardComboModal() {
                                 </div>
                                 <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0 md:col-span-2 lg:col-span-1">
                                     <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="relative shrink-0 w-full">
-                        <div className="relative size-full">
-                            <div className="box-border content-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start justify-start pb-0 pt-4 px-3 sm:px-6 relative w-full">
-                                <div className="bg-slate-50 relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem />
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="one" imageStarred="yes"/>
-                                </div>
-                                <div className="bg-slate-50 relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0 md:col-span-2 lg:col-span-1">
-                                    <CardItem blank="no" images="one"/>
                                 </div>
                             </div>
                         </div>
