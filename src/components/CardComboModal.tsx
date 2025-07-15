@@ -8,8 +8,11 @@ import {
   FileText,
   Image as ImageIcon,
   FileAudio,
-  FileVideo2
+  FileVideo2,
+  Filter,
+  X
 } from 'lucide-react';
+import { useState } from 'react';
 
 // Asset URLs for character images - using placeholder for now but keeping original structure
 const imgFrame184 = "https://picsum.photos/290/363?random=1";
@@ -21,15 +24,24 @@ function LucideIconsChevronRight() {
     );
 }
 
-function AddToCampaignSimple() {
+function AddToCampaignSimple({ active = false, onClick }: { active?: boolean; onClick?: () => void }) {
     return (
-        <div className="relative size-full" data-name="selected=no">
+        <button 
+            className="relative size-full cursor-pointer hover:opacity-80" 
+            data-name={active ? "selected=yes" : "selected=no"}
+            onClick={onClick}
+        >
             <img 
-                src="/AddToCampaign-simple.svg" 
+                src="/AddToCampaign-simple.svg"
                 alt="Add to Campaign" 
-                className="w-full h-full object-contain"
+                className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ease-in-out ${active ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
             />
-        </div>
+            <img 
+                src="/AddToCampaign-ON.svg"
+                alt="Add to Campaign (Active)" 
+                className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ease-in-out ${active ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+            />
+        </button>
     );
 }
 
@@ -197,6 +209,11 @@ function CardItem({
 }
 
 export default function CardComboModal() {
+    const [showFilters, setShowFilters] = useState(false);
+    const [campaignActive, setCampaignActive] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const [searchFocused, setSearchFocused] = useState(false);
+
     return (
         <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] mx-auto min-h-[900px] h-auto">
             <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative w-full h-full">
@@ -231,7 +248,10 @@ export default function CardComboModal() {
                     {/* Actions */}
                     <div className="box-border content-stretch flex flex-row items-center justify-end gap-0 pb-0 pl-0 pr-3 sm:pr-6 pt-6 relative shrink-0">
                         <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10">
-                            <AddToCampaignSimple />
+                            <AddToCampaignSimple 
+                                active={campaignActive}
+                                onClick={() => setCampaignActive(!campaignActive)}
+                            />
                         </div>
                         <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10">
                             <img 
@@ -304,21 +324,32 @@ export default function CardComboModal() {
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="relative shrink-0 w-full">
-                    <div className="relative size-full">
-                        <div className="box-border content-stretch flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between pb-6 pt-0 px-3 sm:px-6 gap-4 sm:gap-0 relative w-full">
-                            <div className="box-border content-stretch flex flex-row gap-4 items-center justify-start p-0 relative shrink-0 w-full sm:w-auto">
-                                <div className="bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto">
-                                    <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
-                                    <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
-                                        <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
-                                            <p className="block leading-[20px]">ATTACH</p>
+                                        <div className="relative shrink-0 w-full">
+                            <div className="relative size-full">
+                                <div className="box-border content-stretch flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between pb-6 pt-0 px-3 sm:px-6 gap-2.5 sm:gap-0 relative w-full">
+                                    <div className="box-border content-stretch flex flex-col sm:flex-row gap-2.5 items-center justify-start p-0 relative shrink-0 w-full sm:w-auto">
+                                        <div className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer">
+                                            <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                            <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
+                                                <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
+                                                    <p className="block leading-[20px]">ATTACH</p>
+                                                </div>
+                                            </div>
                                         </div>
+                                        <button 
+                                            onClick={() => setShowFilters(!showFilters)}
+                                            className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                                        >
+                                            <Filter className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                            <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0 sm:hidden">
+                                                <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
+                                                    <p className="block leading-[20px]">FILTER</p>
+                                                </div>
+                                            </div>
+                                        </button>
                                     </div>
-                                </div>
-                            </div>
                             <div className="basis-0 grow min-h-px min-w-px self-stretch shrink-0 hidden sm:block"/>
-                            <div className="bg-purple-800 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto">
+                            <div className="bg-purple-800 hover:bg-slate-800 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer">
                                 <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
                                     <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-50 uppercase">
                                         <p className="block leading-[20px]">SAVE CARD</p>
@@ -334,50 +365,64 @@ export default function CardComboModal() {
                     <Separator />
                 </div>
 
-                {/* Tabs and Cards Section */}
+                                {/* Tabs and Cards Section */}
                 <div className="bg-slate-100 box-border content-stretch flex flex-col min-h-[490px] items-start justify-start pb-6 pt-0 px-0 relative shrink-0 w-full">
-                                    {/* Tabs Header */}
-                <div className="bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 min-h-[58px] items-start lg:items-center justify-start px-3 sm:px-6 py-3 lg:py-0 relative shrink-0 w-full border-b border-slate-200">
-                    <div className="box-border content-stretch flex flex-row items-start justify-start p-0 relative shrink-0 overflow-x-auto w-full lg:w-auto lg:self-end">
-                        {/* Active Tab - All */}
-                        <div className="box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative shrink-0 border-b-2 border-purple-800">
-                            <CheckCheck className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" strokeWidth={2} />
-                            <div className="basis-0 font-hvd-medium grow leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[10px] sm:text-[12px] text-center text-slate-950 uppercase">
-                                <p className="block leading-[20px]">ALL</p>
+                    {/* Tabs Header */}
+                    <div className={`bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full border-b border-slate-200 overflow-hidden transition-all duration-500 ease-out ${showFilters ? 'opacity-100 max-h-[120px] min-h-[58px] py-3 lg:py-0' : 'opacity-0 max-h-0 py-0'}`}>
+                        <div className="box-border content-stretch flex flex-row items-start justify-start p-0 relative shrink-0 overflow-x-auto w-full lg:w-auto lg:self-end">
+                            {/* Active Tab - All */}
+                            <div className="group box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 lg:min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative flex-1 lg:shrink-0 border-b-2 border-purple-800 hover:border-purple-900 transition-all duration-200 cursor-pointer">
+                                <CheckCheck className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" strokeWidth={2} />
+                                <div className="basis-0 font-hvd-medium grow leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[10px] sm:text-[12px] text-center text-slate-950 uppercase">
+                                    <p className="block leading-[20px]">ALL</p>
+                                </div>
                             </div>
+                            
+                            {/* Other tabs */}
+                            {[
+                                { icon: FileText, label: 'TEXT' },
+                                { icon: ImageIcon, label: 'IMAGE' },
+                                { icon: FileAudio, label: 'AUDIO' },
+                                { icon: FileVideo2, label: 'VIDEO' }
+                            ].map((tab, index) => {
+                                const Icon = tab.icon;
+                                return (
+                                    <div key={index} className="group box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 lg:min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative flex-1 lg:shrink-0 hover:border-b-2 hover:border-slate-400 transition-all duration-200 cursor-pointer">
+                                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-slate-700" strokeWidth={2} />
+                                        <div className="basis-0 font-hvd-medium grow leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[10px] sm:text-[12px] text-center text-slate-500 group-hover:text-slate-700 uppercase">
+                                            <p className="block leading-[20px]">{tab.label}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                         
-                        {/* Other tabs */}
-                        {[
-                            { icon: FileText, label: 'TEXT' },
-                            { icon: ImageIcon, label: 'IMAGE' },
-                            { icon: FileAudio, label: 'AUDIO' },
-                            { icon: FileVideo2, label: 'VIDEO' }
-                        ].map((tab, index) => {
-                            const Icon = tab.icon;
-                            return (
-                                <div key={index} className="box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative shrink-0">
-                                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" strokeWidth={2} />
-                                    <div className="basis-0 font-hvd-medium grow leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[10px] sm:text-[12px] text-center text-slate-500 uppercase">
-                                        <p className="block leading-[20px]">{tab.label}</p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    
-                    <div className="basis-0 grow h-full min-h-px min-w-px shrink-0 hidden lg:block"/>
-                    
-                    {/* Search */}
-                    <div className="box-border content-stretch flex flex-row gap-4 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
-                            <div className="bg-white relative rounded-full shrink-0 w-full max-w-[300px] lg:w-[300px] border border-slate-200">
+                        <div className="basis-0 grow h-full min-h-px min-w-px shrink-0 hidden lg:block"/>
+                        
+                        {/* Search */}
+                        <div className="box-border content-stretch flex flex-row gap-4 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
+                            <div className={`bg-white relative rounded-full shrink-0 w-full lg:max-w-[300px] lg:w-[300px] border transition-all duration-200 ${searchFocused ? 'border-purple-800 shadow-sm' : 'border-slate-200'}`}>
                                 <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden px-3 py-2.5 relative w-full">
                                     <div className="box-border content-stretch flex flex-row items-center justify-start pl-0 pr-2 py-0 relative shrink-0">
-                                        <Search className="w-4 h-4 text-slate-950 opacity-50" strokeWidth={2} />
+                                        <Search className={`w-4 h-4 transition-colors duration-200 ${searchFocused || searchValue ? 'text-slate-950' : 'text-slate-950 opacity-50'}`} strokeWidth={2} />
                                     </div>
-                                    <div className="basis-0 font-hvd-regular grow h-5 leading-[20px] min-h-px min-w-px not-italic opacity-50 overflow-ellipsis overflow-hidden relative shrink-0 text-[14px] text-left text-slate-950">
-                                        <p className="block leading-[20px] overflow-inherit">Search</p>
-                                    </div>
+                                    <input
+                                        type="text"
+                                        value={searchValue}
+                                        onChange={(e) => setSearchValue(e.target.value)}
+                                        onFocus={() => setSearchFocused(true)}
+                                        onBlur={() => setSearchFocused(false)}
+                                        placeholder="Search"
+                                        className="basis-0 font-hvd-regular grow h-5 leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[14px] text-left text-slate-950 bg-transparent border-0 outline-none placeholder:text-slate-950 placeholder:opacity-50"
+                                    />
+                                    {searchValue && (
+                                        <button
+                                            onClick={() => setSearchValue('')}
+                                            className="box-border content-stretch flex flex-row items-center justify-center pl-2 pr-0 py-0 relative shrink-0 hover:opacity-60 transition-opacity duration-200"
+                                        >
+                                            <X className="w-4 h-4 text-slate-950 opacity-40" strokeWidth={2} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
