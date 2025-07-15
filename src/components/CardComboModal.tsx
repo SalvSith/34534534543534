@@ -10,7 +10,11 @@ import {
   FileAudio,
   FileVideo2,
   Filter,
-  X
+  X,
+  Maximize2,
+  Minimize2,
+  List,
+  Grid3x3
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -208,24 +212,120 @@ function CardItem({
     );
 }
 
+interface ListViewItemProps {
+    title?: string;
+    bodyCopy?: string;
+    imageStarred?: 'no' | 'yes';
+    mediaType?: 'collection' | 'card' | 'image';
+    imageUrl?: string;
+    index?: number;
+}
+
+function ListViewItem({ 
+    title = "Gerald of Rivendell",
+    bodyCopy = "Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom. With silver hair cascading down his shoulders and piercing emerald eyes, he navigates the mystical realms with ease.",
+    imageStarred = "no",
+    mediaType = "card",
+    imageUrl = imgFrame184,
+    index = 0
+}: ListViewItemProps) {
+    const getMediaTypeIcon = () => {
+        switch (mediaType) {
+            case 'image':
+                return <ImageIcon className="w-4 h-4 text-slate-500" strokeWidth={2} />;
+            case 'collection':
+                return <File className="w-4 h-4 text-slate-500" strokeWidth={2} />;
+            default:
+                return <FileText className="w-4 h-4 text-slate-500" strokeWidth={2} />;
+        }
+    };
+
+    return (
+        <div className={`${index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100'} border-b border-slate-100 transition-colors duration-200 cursor-pointer`}>
+            <div className="flex items-center gap-4 px-4 py-3">
+                {/* Thumbnail */}
+                <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-slate-100">
+                    <div 
+                        className="w-full h-full bg-center bg-cover bg-no-repeat"
+                        style={{ backgroundImage: `url('${imageUrl}')` }}
+                    />
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2">
+                        <div className="flex-1">
+                            <h3 className="font-hvd-medium text-[16px] text-slate-950 leading-tight mb-1 truncate">
+                                {title}
+                            </h3>
+                            <p className="font-hvd-regular text-[14px] text-slate-600 leading-[20px] line-clamp-2">
+                                {bodyCopy}
+                            </p>
+                        </div>
+                        
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 shrink-0">
+                            {/* Media type indicator */}
+                            <div className="flex items-center justify-center w-6 h-6">
+                                {getMediaTypeIcon()}
+                            </div>
+                            
+                            {/* Star */}
+                            {imageStarred === 'yes' && (
+                                <div className="flex items-center justify-center w-6 h-6">
+                                    <Star className="w-4 h-4 text-slate-950 fill-current" />
+                                </div>
+                            )}
+                            
+                            {/* User avatar */}
+                            <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-200">
+                                <div 
+                                    className="w-full h-full bg-center bg-cover bg-no-repeat"
+                                    style={{ backgroundImage: `url('${img1}')` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function CardComboModal() {
     const [showFilters, setShowFilters] = useState(false);
     const [campaignActive, setCampaignActive] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [searchFocused, setSearchFocused] = useState(false);
+    const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+    const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+
+    // Sample data for list view
+    const listItems = [
+        { title: "Gerald's Silver Sword", bodyCopy: "A legendary silver sword forged for combating undead creatures and supernatural beings.", imageStarred: "yes" as const, mediaType: "image" as const },
+        { title: "Gerald of Rivendell", bodyCopy: "Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom.", imageStarred: "yes" as const, mediaType: "image" as const },
+        { title: "Roach - Faithful Companion", bodyCopy: "Gerald's trusted horse, loyal and brave, has been with him through countless adventures.", imageStarred: "no" as const, mediaType: "card" as const },
+        { title: "Steel Sword", bodyCopy: "For natural foes and human opponents, this steel blade has seen many battles.", imageStarred: "yes" as const, mediaType: "image" as const },
+        { title: "Magic Signs", bodyCopy: "Gerald's collection of magical signs used for various combat and utility purposes.", imageStarred: "no" as const, mediaType: "card" as const },
+        { title: "Witcher Medallion", bodyCopy: "A silver wolf medallion that vibrates in the presence of magic and monsters.", imageStarred: "yes" as const, mediaType: "image" as const },
+        { title: "Elven Ancestry", bodyCopy: "Gerald's connection to his elven heritage gives him enhanced senses and longevity.", imageStarred: "no" as const, mediaType: "card" as const },
+        { title: "Forest Spirits", bodyCopy: "Gerald's ability to communicate with forest spirits aids him in his quest for knowledge.", imageStarred: "yes" as const, mediaType: "image" as const },
+        { title: "Emerald Eyes", bodyCopy: "His piercing emerald eyes can see through deception and into the soul.", imageStarred: "no" as const, mediaType: "card" as const },
+        { title: "New Character Card", bodyCopy: "Create a new character card to expand your story world.", imageStarred: "no" as const, mediaType: "card" as const },
+    ];
 
     return (
-        <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] mx-auto h-[80vh] max-h-[900px]">
-            <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative w-full h-full">
-                {/* Header */}
-                <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 w-full">
+        <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto h-[80vh] max-h-[900px]" style={{ width: 'min(100vw - 2rem, 1024px)' }}>
+            <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative w-full min-w-0 h-full transition-all duration-500 ease-out">
+                {/* Header - Hide when gallery is expanded */}
+                <div className={`box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative w-full transition-all duration-500 ease-out overflow-hidden ${isGalleryExpanded ? 'opacity-0 max-h-0 transform -translate-y-4' : 'opacity-100 max-h-[200px] transform translate-y-0'}`}>
                     <div className="basis-0 grow min-h-px min-w-px relative shrink-0">
                         <div className="relative size-full">
                             <div className="box-border content-stretch flex flex-col gap-1.5 items-start justify-start pl-6 pr-0 py-6 relative w-full">
                                 {/* Breadcrumb */}
                                 <div className="flex flex-wrap gap-2 items-center justify-start p-0 relative shrink-0">
-                                    <div className="box-border content-stretch flex flex-row items-center justify-center p-0 relative shrink-0">
-                                        <div className="font-hvd-regular leading-[20px] not-italic relative shrink-0 text-[14px] text-left text-slate-500">
+                                    <div className="box-border content-stretch flex flex-row items-center justify-center p-0 relative shrink-0 cursor-pointer hover:text-slate-700 transition-colors duration-200">
+                                        <div className="font-hvd-regular leading-[20px] not-italic relative shrink-0 text-[14px] text-left text-slate-500 hover:text-inherit">
                                             <p className="leading-[20px]">Library</p>
                                         </div>
                                     </div>
@@ -253,14 +353,14 @@ export default function CardComboModal() {
                                 onClick={() => setCampaignActive(!campaignActive)}
                             />
                         </div>
-                        <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10">
+                        <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10 cursor-pointer hover:bg-slate-200 rounded-lg transition-colors duration-200 p-1">
                             <img 
                                 src="/Icon Button.svg" 
                                 alt="More options" 
                                 className="w-full h-full object-contain"
                             />
                         </div>
-                        <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10">
+                        <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10 cursor-pointer hover:bg-slate-200 rounded-lg transition-colors duration-200 p-1">
                             <img 
                                 src="/Icon Button-1.svg" 
                                 alt="Close" 
@@ -270,105 +370,111 @@ export default function CardComboModal() {
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="relative shrink-0 w-full">
-                    <div className="relative size-full">
-                        <div className="box-border content-stretch flex flex-col gap-4 items-start justify-start pb-6 pt-0 px-3 sm:px-6 relative w-full max-w-[768px]">
-                            <div className="font-hvd-regular leading-[24px] w-full not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
-                                <p className="block leading-[24px]">{`Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom. With silver hair cascading down his shoulders and piercing emerald eyes, he navigates the mystical realms with ease.`}</p>
-                                <br/>
-                                <p className="block leading-[24px]">{`His expertise in magic and combat makes him a formidable ally, while his deep connection to nature allows him to communicate with the forest spirits.`}</p>
-                            </div>
-                            
-                            {/* Items with links */}
-                            <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 flex-wrap">
-                                <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
-                                    <p className="block leading-[24px]">He has a</p>
+                {/* Content - Hide when gallery is expanded */}
+                {!isGalleryExpanded && (
+                    <div className="relative shrink-0 w-full">
+                        <div className="relative size-full">
+                            <div className="box-border content-stretch flex flex-col gap-4 items-start justify-start pb-6 pt-0 px-3 sm:px-6 relative w-full max-w-[768px]">
+                                <div className="font-hvd-regular leading-[24px] w-full not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
+                                    <p className="block leading-[24px]">{`Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom. With silver hair cascading down his shoulders and piercing emerald eyes, he navigates the mystical realms with ease.`}</p>
+                                    <br/>
+                                    <p className="block leading-[24px]">{`His expertise in magic and combat makes him a formidable ally, while his deep connection to nature allows him to communicate with the forest spirits.`}</p>
                                 </div>
-                                <div className="bg-slate-100 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0">
-                                    <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
-                                    <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
-                                    <div className="font-hvd-regular leading-none not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
-                                        <p className="block leading-none">Silver sword</p>
+                                
+                                {/* Items with links */}
+                                <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 flex-wrap">
+                                    <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
+                                        <p className="block leading-[24px]">He has a</p>
+                                    </div>
+                                    <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
+                                        <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
+                                        <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
+                                        <div className="font-hvd-regular leading-none not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
+                                            <p className="block leading-none">Silver sword</p>
+                                        </div>
+                                    </div>
+                                    <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
+                                        <p className="block leading-[24px]">{`for combatting undead forces and a `}</p>
+                                    </div>
+                                    <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
+                                        <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
+                                        <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
+                                        <div className="font-hvd-regular leading-none not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
+                                            <p className="block leading-none">Steel sword</p>
+                                        </div>
+                                    </div>
+                                    <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
+                                        <p className="block leading-[24px]">for natural foes</p>
                                     </div>
                                 </div>
-                                <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
-                                    <p className="block leading-[24px]">{`for combatting undead forces and a `}</p>
-                                </div>
-                                <div className="bg-slate-100 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0">
-                                    <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
-                                    <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
-                                    <div className="font-hvd-regular leading-none not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
-                                        <p className="block leading-none">Steel sword</p>
+                                
+                                <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 flex-wrap">
+                                    <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
+                                        <p className="block leading-[24px]">He rides a horse named</p>
                                     </div>
-                                </div>
-                                <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
-                                    <p className="block leading-[24px]">for natural foes</p>
-                                </div>
-                            </div>
-                            
-                            <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 flex-wrap">
-                                <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
-                                    <p className="block leading-[24px]">He rides a horse named</p>
-                                </div>
-                                <div className="bg-slate-100 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0">
-                                    <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
-                                    <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
-                                    <div className="font-hvd-regular leading-none not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
-                                        <p className="block leading-none">Roach</p>
+                                    <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
+                                        <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
+                                        <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
+                                        <div className="font-hvd-regular leading-none not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
+                                            <p className="block leading-none">Roach</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
-                {/* Bottom Actions */}
-                                        <div className="relative shrink-0 w-full">
-                            <div className="relative size-full">
-                                <div className="box-border content-stretch flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between pb-6 pt-0 px-3 sm:px-6 gap-2.5 sm:gap-0 relative w-full">
-                                    <div className="box-border content-stretch flex flex-col sm:flex-row gap-2.5 items-center justify-start p-0 relative shrink-0 w-full sm:w-auto">
-                                        <div className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer">
-                                            <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
-                                            <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
-                                                <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
-                                                    <p className="block leading-[20px]">ATTACH</p>
-                                                </div>
+                {/* Bottom Actions - Hide when gallery is expanded */}
+                {!isGalleryExpanded && (
+                    <div className="relative shrink-0 w-full">
+                        <div className="relative size-full">
+                            <div className="box-border content-stretch flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between pb-6 pt-0 px-3 sm:px-6 gap-2.5 sm:gap-0 relative w-full">
+                                <div className="box-border content-stretch flex flex-col sm:flex-row gap-2.5 items-center justify-start p-0 relative shrink-0 w-full sm:w-auto">
+                                    <div className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer">
+                                        <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                        <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
+                                            <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
+                                                <p className="block leading-[20px]">ATTACH</p>
                                             </div>
                                         </div>
-                                        <button 
-                                            onClick={() => setShowFilters(!showFilters)}
-                                            className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
-                                        >
-                                            <Filter className="w-4 h-4 text-purple-800" strokeWidth={2} />
-                                            <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0 sm:hidden">
-                                                <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
-                                                    <p className="block leading-[20px]">FILTER</p>
-                                                </div>
-                                            </div>
-                                        </button>
                                     </div>
-                            <div className="basis-0 grow min-h-px min-w-px self-stretch shrink-0 hidden sm:block"/>
-                            <div className="bg-purple-800 hover:bg-slate-800 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer">
-                                <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
-                                    <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-50 uppercase">
-                                        <p className="block leading-[20px]">SAVE CARD</p>
+                                    <button 
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                                    >
+                                        <Filter className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                        <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0 sm:hidden">
+                                            <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
+                                                <p className="block leading-[20px]">FILTER</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                                <div className="basis-0 grow min-h-px min-w-px self-stretch shrink-0 hidden sm:block"/>
+                                <div className="bg-purple-800 hover:bg-slate-800 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer">
+                                    <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
+                                        <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-50 uppercase">
+                                            <p className="block leading-[20px]">SAVE CARD</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
-                {/* Separator */}
-                <div className="box-border content-stretch flex flex-col items-start justify-start p-0 relative shrink-0 w-full">
-                    <Separator />
-                </div>
+                {/* Separator - Hide when gallery is expanded */}
+                {!isGalleryExpanded && (
+                    <div className="box-border content-stretch flex flex-col items-start justify-start p-0 relative shrink-0 w-full">
+                        <Separator />
+                    </div>
+                )}
 
-                                {/* Tabs and Cards Section */}
-                <div className="bg-slate-100 box-border content-stretch flex flex-col items-start justify-start pb-0 pt-0 px-0 relative flex-1 w-full overflow-hidden">
+                {/* Tabs and Cards Section */}
+                <div className={`bg-slate-100 box-border content-stretch flex flex-col items-start justify-start pb-0 pt-0 px-0 relative w-full overflow-hidden transition-all duration-500 ease-out ${isGalleryExpanded ? 'flex-1' : 'flex-1'}`}>
                     {/* Tabs Header */}
-                    <div className={`bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full border-b border-slate-200 overflow-hidden transition-all duration-500 ease-out ${showFilters ? 'opacity-100 max-h-[120px] min-h-[58px] py-3 lg:py-0' : 'opacity-0 max-h-0 py-0'}`}>
+                    <div className={`bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full border-b border-slate-200 overflow-hidden transition-all duration-500 ease-out ${showFilters || isGalleryExpanded ? 'opacity-100 max-h-[120px] min-h-[58px] py-3 lg:py-0' : 'opacity-0 max-h-0 py-0'}`}>
                         <div className="box-border content-stretch flex flex-row items-start justify-start p-0 relative shrink-0 overflow-x-auto w-full lg:w-auto lg:self-end">
                             {/* Active Tab - All */}
                             <div className="group box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-14 lg:min-w-14 pb-3.5 pt-2 px-2 sm:px-4 relative flex-1 lg:shrink-0 border-b-2 border-purple-800 hover:border-purple-900 transition-all duration-200 cursor-pointer">
@@ -399,8 +505,8 @@ export default function CardComboModal() {
                         
                         <div className="basis-0 grow h-full min-h-px min-w-px shrink-0 hidden lg:block"/>
                         
-                        {/* Search */}
-                        <div className="box-border content-stretch flex flex-row gap-4 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
+                        {/* Search, View Toggle, and Expand Button */}
+                        <div className="box-border content-stretch flex flex-row gap-2 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
                             <div className={`bg-white relative rounded-full shrink-0 w-full lg:max-w-[300px] lg:w-[300px] border transition-all duration-200 ${searchFocused ? 'border-purple-800 shadow-sm' : 'border-slate-200'}`}>
                                 <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden px-3 py-2.5 relative w-full">
                                     <div className="box-border content-stretch flex flex-row items-center justify-start pl-0 pr-2 py-0 relative shrink-0">
@@ -425,50 +531,135 @@ export default function CardComboModal() {
                                     )}
                                 </div>
                             </div>
+                            
+                            {/* View Mode Toggle Button */}
+                            <button
+                                onClick={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
+                                className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                                title={viewMode === 'card' ? "Switch to list view" : "Switch to card view"}
+                            >
+                                {viewMode === 'card' ? (
+                                    <List className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                ) : (
+                                    <Grid3x3 className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                )}
+                            </button>
+                            
+                            {/* Expand/Collapse Button */}
+                            <button
+                                onClick={() => setIsGalleryExpanded(!isGalleryExpanded)}
+                                className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                                title={isGalleryExpanded ? "Collapse gallery" : "Expand gallery"}
+                            >
+                                {isGalleryExpanded ? (
+                                    <Minimize2 className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                ) : (
+                                    <Maximize2 className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                )}
+                            </button>
                         </div>
                     </div>
 
-                    {/* Cards Grid */}
-                    <div className="relative flex-1 w-full overflow-y-auto">
-                        <div className="relative size-full">
-                            <div className="box-border content-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start justify-start pb-6 pt-6 px-3 sm:px-6 relative w-full">
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                    {/* Cards Grid / List View */}
+                    <div className="relative flex-1 w-full min-w-0 overflow-y-auto">
+                        <div className="relative size-full min-w-0">
+                            {viewMode === 'card' ? (
+                                /* Card Grid View */
+                                <div className="box-border content-stretch grid gap-4 items-start justify-start pb-6 pt-6 px-3 sm:px-6 relative w-full min-w-0 transition-all duration-300 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="yes"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                    </div>
+                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                    </div>
+                                    {/* Additional cards for expanded view */}
+                                    {isGalleryExpanded && (
+                                        <>
+                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                                <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                            </div>
+                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                                <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                            </div>
+                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                                <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                            </div>
+                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                                <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                            </div>
+                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                                <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                            </div>
+                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                                <CardItem blank="yes"/>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                            ) : (
+                                /* List View */
+                                <div className="pb-6 pt-6 px-3 sm:px-6 relative w-full">
+                                    <div className="bg-white rounded-lg overflow-hidden border border-slate-200">
+                                    {/* List Header */}
+                                    <div className="bg-slate-50 border-b border-slate-200 px-4 py-3">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-36 shrink-0">
+                                                <span className="font-hvd-medium text-[12px] text-slate-500 uppercase tracking-wide">Card Information</span>
+                                            </div>
+                                            <div className="flex-1">
+                                            </div>
+                                            <div className="w-16 shrink-0 text-right">
+                                                <span className="font-hvd-medium text-[12px] text-slate-500 uppercase tracking-wide">Type</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* List Items */}
+                                    <div>
+                                        {listItems.slice(0, isGalleryExpanded ? listItems.length : 10).map((item, index) => (
+                                            <ListViewItem 
+                                                key={index}
+                                                title={item.title}
+                                                bodyCopy={item.bodyCopy}
+                                                imageStarred={item.imageStarred}
+                                                mediaType={item.mediaType}
+                                                index={index}
+                                            />
+                                        ))}
+                                    </div>
+                                    </div>
                                 </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="yes"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
-                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
