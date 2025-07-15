@@ -215,7 +215,7 @@ export default function CardComboModal() {
     const [searchFocused, setSearchFocused] = useState(false);
 
     return (
-        <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] mx-auto min-h-[900px] h-auto">
+        <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] mx-auto h-[80vh] max-h-[900px]">
             <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative w-full h-full">
                 {/* Header */}
                 <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 w-full">
@@ -366,7 +366,7 @@ export default function CardComboModal() {
                 </div>
 
                                 {/* Tabs and Cards Section */}
-                <div className="bg-slate-100 box-border content-stretch flex flex-col min-h-[490px] items-start justify-start pb-6 pt-0 px-0 relative shrink-0 w-full">
+                <div className="bg-slate-100 box-border content-stretch flex flex-col items-start justify-start pb-0 pt-0 px-0 relative flex-1 w-full overflow-hidden">
                     {/* Tabs Header */}
                     <div className={`bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full border-b border-slate-200 overflow-hidden transition-all duration-500 ease-out ${showFilters ? 'opacity-100 max-h-[120px] min-h-[58px] py-3 lg:py-0' : 'opacity-0 max-h-0 py-0'}`}>
                         <div className="box-border content-stretch flex flex-row items-start justify-start p-0 relative shrink-0 overflow-x-auto w-full lg:w-auto lg:self-end">
@@ -429,16 +429,43 @@ export default function CardComboModal() {
                     </div>
 
                     {/* Cards Grid */}
-                    <div className="relative shrink-0 w-full">
+                    <div className="relative flex-1 w-full overflow-y-auto">
                         <div className="relative size-full">
-                            <div className="box-border content-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start justify-start pb-0 pt-6 px-3 sm:px-6 relative w-full">
+                            <div className="box-border content-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start justify-start pb-6 pt-6 px-3 sm:px-6 relative w-full">
                                 <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
                                     <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
                                 </div>
                                 <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
                                     <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
                                 </div>
-                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0 md:col-span-2 lg:col-span-1">
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="yes"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
+                                    <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
+                                </div>
+                                <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[400px] mx-auto lg:mx-0">
                                     <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
                                 </div>
                             </div>
