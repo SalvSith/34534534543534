@@ -1,5 +1,7 @@
 import { 
   ChevronRight, 
+  ChevronUp,
+  ChevronDown,
   File, 
   Star, 
   Paperclip, 
@@ -11,8 +13,6 @@ import {
   FileVideo2,
   Filter,
   X,
-  Maximize2,
-  Minimize2,
   List,
   Grid3x3,
   Eye,
@@ -32,8 +32,8 @@ const imgImage1 = "http://localhost:3845/assets/6f081d00eeabb5809fcfb633f13f1a4e
 const imgFrame187 = "http://localhost:3845/assets/c04ea38bdfac0fc122878ebddc6b5db3806ff2e7.png";
 const imgFrame185 = "http://localhost:3845/assets/35deda4ec38b232bcb6f601a8269e7017ba84a09.png";
 const imgFrame186 = "http://localhost:3845/assets/fa84f6c3eada06d932b2bd74c8ff8e35375bc615.png";
-const imgHexagon = "http://localhost:3845/assets/d090f3ed711491b6d26d07800ce108242a362927.svg";
-const imgPlus = "http://localhost:3845/assets/7bac326c57b9f7353e78a7b7bf2380cc8cac46cb.svg";
+// const imgHexagon = "http://localhost:3845/assets/d090f3ed711491b6d26d07800ce108242a362927.svg";
+// const imgPlus = "http://localhost:3845/assets/7bac326c57b9f7353e78a7b7bf2380cc8cac46cb.svg";
 
 // Hover tooltip component - EXACT 1:1 copy from Figma frame
 interface HoverTooltipProps {
@@ -46,6 +46,7 @@ interface HoverTooltipProps {
 function HoverTooltip({ children, title = "Gerald of Rivendell", description = "Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom. With silver hair cascading down his shoulders and piercing emerald eyes, he navigates the mystical realms with ease. His expertise in magic and combat makes him a formidable ally, while his deep connection to nature allows him to communicate with the forest spirits. Gerald's quest for knowledge and justice drives him to protect the innocent and uphold the balance between worlds.", itemCount = 10 }: HoverTooltipProps) {
     const [isVisible, setIsVisible] = useState(false);
     const [isHoveringTooltip, setIsHoveringTooltip] = useState(false);
+    const [tooltipCampaignActive, setTooltipCampaignActive] = useState(false);
     const timeoutRef = useRef<number | null>(null);
 
     const handleMouseEnter = () => {
@@ -96,7 +97,7 @@ function HoverTooltip({ children, title = "Gerald of Rivendell", description = "
             {children}
             {isVisible && (
                 <div 
-                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 pointer-events-auto"
+                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-[9999] pointer-events-auto"
                     onMouseEnter={handleTooltipEnter}
                     onMouseLeave={handleTooltipLeave}
                 >
@@ -125,14 +126,21 @@ function HoverTooltip({ children, title = "Gerald of Rivendell", description = "
                                 
                                 {/* Add to campaign button */}
                                 <div className="absolute box-border content-stretch flex flex-row items-center justify-end left-2 overflow-clip pl-2 pr-1 py-1 right-2 rounded-xl top-2">
-                                    <div className="relative shrink-0 size-6">
-                                        <div className="absolute bottom-[20%] left-[22.5%] right-[22.5%] top-[20%]">
-                                            <img alt="" className="block max-w-none size-full" src={imgHexagon}/>
-                                        </div>
-                                        <div className="absolute inset-[40%]">
-                                            <img alt="" className="block max-w-none size-full" src={imgPlus}/>
-                                        </div>
-                                    </div>
+                                    <button 
+                                        onClick={() => setTooltipCampaignActive(!tooltipCampaignActive)}
+                                        className="relative shrink-0 size-6 cursor-pointer hover:opacity-80 transition-all duration-300 ease-in-out"
+                                    >
+                                        <img 
+                                            src="/AddToCampaign-simple.svg"
+                                            alt="Add to Campaign" 
+                                            className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ease-in-out ${tooltipCampaignActive ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+                                        />
+                                        <img 
+                                            src="/AddToCampaign-ON.svg"
+                                            alt="Add to Campaign (Active)" 
+                                            className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ease-in-out ${tooltipCampaignActive ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+                                        />
+                                    </button>
                                 </div>
                             </div>
                             
@@ -140,7 +148,7 @@ function HoverTooltip({ children, title = "Gerald of Rivendell", description = "
                             <div className="basis-0 grow min-h-px min-w-px relative shrink-0 w-full">
                                 <div className="relative size-full">
                                     <div className="box-border content-stretch flex flex-col gap-2 items-start justify-start pb-3 pt-0 px-3 relative size-full">
-                                        <div className="line-clamp-1 basis-0 font-['HvDTrial_Brandon_Grotesque:Regular',_sans-serif] font-normal grow min-h-px min-w-px not-italic opacity-80 relative shrink-0 text-[11px] text-left text-slate-950 w-full overflow-hidden text-ellipsis">
+                                        <div className="line-clamp-5 basis-0 font-['HvDTrial_Brandon_Grotesque:Regular',_sans-serif] font-normal grow min-h-px min-w-px not-italic opacity-80 relative shrink-0 text-[11px] text-left text-slate-950 w-full">
                                             <p className="block leading-[16px]">{description}</p>
                                         </div>
                                         
@@ -247,16 +255,29 @@ interface ContextMenuProps {
     y: number;
     onClose: () => void;
     items: MenuItem[];
+    excludeRefs?: React.RefObject<HTMLElement>[];
 }
 
-function ContextMenu({ x, y, onClose, items }: ContextMenuProps) {
+function ContextMenu({ x, y, onClose, items, excludeRefs = [] }: ContextMenuProps) {
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                onClose();
+            const target = event.target as Node;
+            
+            // Don't close if clicking on the menu itself
+            if (menuRef.current && menuRef.current.contains(target)) {
+                return;
             }
+            
+            // Don't close if clicking on any excluded elements (like the trigger button)
+            for (const ref of excludeRefs) {
+                if (ref.current && ref.current.contains(target)) {
+                    return;
+                }
+            }
+            
+            onClose();
         };
 
         const handleEscape = (event: KeyboardEvent) => {
@@ -272,7 +293,7 @@ function ContextMenu({ x, y, onClose, items }: ContextMenuProps) {
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleEscape);
         };
-    }, [onClose]);
+    }, [onClose, excludeRefs]);
 
     // Adjust position if menu would go off screen
     useEffect(() => {
@@ -343,6 +364,7 @@ interface CardItemProps {
     mediaType?: 'collection' | 'card' | 'image';
     cardIndex?: number;
     onDelete?: (cardIndex: number) => void;
+    onSetCover?: (cardIndex: number) => void;
 }
 
 function CardItem({ 
@@ -353,16 +375,14 @@ function CardItem({
     imageStarred = "no",
     mediaType = "card",
     cardIndex,
-    onDelete
+    onDelete,
+    onSetCover
 }: CardItemProps) {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
     const handleRightClick = (e: React.MouseEvent) => {
-        // Only show context menu for image cards
-        if (mediaType === 'image') {
-            e.preventDefault();
-            setContextMenu({ x: e.clientX, y: e.clientY });
-        }
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY });
     };
 
     const handleView = () => {
@@ -371,8 +391,9 @@ function CardItem({
     };
 
     const handleSetCover = () => {
-        console.log('Set cover image');
-        // Add your set cover logic here
+        if (cardIndex !== undefined && onSetCover) {
+            onSetCover(cardIndex);
+        }
     };
 
     const handleDelete = () => {
@@ -388,7 +409,7 @@ function CardItem({
         <div className="absolute border-4 border-white border-solid inset-0 pointer-events-none rounded-3xl shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
     );
 
-    if (blank === 'no' && images === 'many' && state === 'Default' && imageStarred === 'yes' && mediaType === 'image') {
+    if (blank === 'no' && images === 'many' && state === 'Default' && mediaType === 'image') {
         return (
             <>
                 <div 
@@ -414,9 +435,11 @@ function CardItem({
                             </div>
                         </div>
                     </div>
-                    <div className="absolute bg-[rgba(248,250,252,0.5)] left-4 rounded-full size-10 top-4 flex items-center justify-center">
-                        <Star className="w-4 h-4 text-slate-950 fill-current" />
-                    </div>
+                    {imageStarred === 'yes' && (
+                        <div className="absolute bg-[rgba(248,250,252,0.5)] left-4 rounded-full size-10 top-4 flex items-center justify-center">
+                            <Star className="w-4 h-4 text-slate-950 fill-current" />
+                        </div>
+                    )}
                 </div>
                 {element1}
             </div>
@@ -433,11 +456,11 @@ function CardItem({
                                 icon: Eye,
                                 onClick: handleView
                             },
-                            {
-                                label: 'Set cover image',
+                            ...(mediaType === 'image' ? [{
+                                label: imageStarred === 'yes' ? 'Remove cover' : 'Set cover',
                                 icon: Star,
                                 onClick: handleSetCover
-                            },
+                            }] : []),
                             {
                                 label: 'Delete',
                                 icon: Trash2,
@@ -451,9 +474,13 @@ function CardItem({
         );
     }
 
-    if (blank === 'no' && images === 'one' && state === 'Default' && imageStarred === 'no' && mediaType === 'card') {
+    if (blank === 'no' && images === 'one' && state === 'Default' && mediaType === 'card') {
         return (
-            <div className="bg-slate-50 relative rounded-3xl size-full">
+            <>
+            <div 
+                className="bg-slate-50 relative rounded-3xl size-full"
+                onContextMenu={handleRightClick}
+            >
                 <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative size-full">
                     <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 w-full">
                         <div className="basis-0 grow min-h-px min-w-px relative shrink-0">
@@ -493,15 +520,47 @@ function CardItem({
                             </div>
                         </div>
                     </div>
+                    {imageStarred === 'yes' && (
+                        <div className="absolute bg-[rgba(248,250,252,0.5)] left-4 rounded-full size-10 top-4 flex items-center justify-center">
+                            <Star className="w-4 h-4 text-slate-950 fill-current" />
+                        </div>
+                    )}
                     {element1}
                 </div>
             </div>
+            
+            {/* Context Menu */}
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={() => setContextMenu(null)}
+                    items={[
+                        {
+                            label: 'View',
+                            icon: Eye,
+                            onClick: handleView
+                        },
+                        {
+                            label: 'Delete',
+                            icon: Trash2,
+                            onClick: handleDelete,
+                            variant: 'danger' as const
+                        }
+                    ]}
+                />
+            )}
+            </>
         );
     }
 
     // Default blank card
     return (
-        <div className="bg-slate-50 relative rounded-3xl size-full">
+        <>
+        <div 
+            className="bg-slate-50 relative rounded-3xl size-full"
+            onContextMenu={handleRightClick}
+        >
             <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative size-full">
                 <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 w-full">
                     <div className="basis-0 grow min-h-px min-w-px relative shrink-0">
@@ -538,9 +597,42 @@ function CardItem({
                         </div>
                     </div>
                 </div>
+                {imageStarred === 'yes' && (
+                    <div className="absolute bg-[rgba(248,250,252,0.5)] left-4 rounded-full size-10 top-4 flex items-center justify-center">
+                        <Star className="w-4 h-4 text-slate-950 fill-current" />
+                    </div>
+                )}
                 {element1}
             </div>
         </div>
+        
+        {/* Context Menu */}
+        {contextMenu && (
+            <ContextMenu
+                x={contextMenu.x}
+                y={contextMenu.y}
+                onClose={() => setContextMenu(null)}
+                items={[
+                    {
+                        label: 'View',
+                        icon: Eye,
+                        onClick: handleView
+                    },
+                    ...(mediaType === 'image' ? [{
+                        label: imageStarred === 'yes' ? 'Remove cover' : 'Set cover',
+                        icon: Star,
+                        onClick: handleSetCover
+                    }] : []),
+                    {
+                        label: 'Delete',
+                        icon: Trash2,
+                        onClick: handleDelete,
+                        variant: 'danger' as const
+                    }
+                ]}
+            />
+        )}
+        </>
     );
 }
 
@@ -632,18 +724,74 @@ export default function CardComboModal() {
     const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
     const [hiddenCards, setHiddenCards] = useState<Set<number>>(new Set());
+    const [starredCards, setStarredCards] = useState<Set<number>>(new Set([0])); // Card 0 starts starred
     const [ellipsisMenu, setEllipsisMenu] = useState<{ x: number; y: number } | null>(null);
     const ellipsisButtonRef = useRef<HTMLDivElement>(null);
+    const cardsContainerRef = useRef<HTMLDivElement>(null);
+
+    // Check if device is mobile (screen width < 1024px which is the lg breakpoint)
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Mobile scroll detection for auto-expansion and collapse
+    useEffect(() => {
+        if (!isMobile || !cardsContainerRef.current) return;
+
+        let scrollThreshold = 50; // Minimum scroll distance before triggering expansion
+        let collapseThreshold = 10; // Maximum scroll distance before triggering collapse
+
+        const handleScroll = (e: Event) => {
+            const target = e.target as HTMLElement;
+            
+            // Expand when scrolling down past threshold
+            if (!isGalleryExpanded && target.scrollTop > scrollThreshold) {
+                setIsGalleryExpanded(true);
+            }
+            // Collapse when scrolling back to the top
+            else if (isGalleryExpanded && target.scrollTop <= collapseThreshold) {
+                setIsGalleryExpanded(false);
+            }
+        };
+
+        const container = cardsContainerRef.current;
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+        };
+    }, [isMobile, isGalleryExpanded]);
 
     // Handler for deleting cards
     const handleDeleteCard = (cardIndex: number) => {
         setHiddenCards(prev => new Set([...prev, cardIndex]));
     };
 
+    // Handler for setting cover/starring cards - only one cover allowed at a time
+    const handleSetCover = (cardIndex: number) => {
+        setStarredCards(prev => {
+            if (prev.has(cardIndex)) {
+                // If this card is already starred, remove it
+                return new Set();
+            } else {
+                // If this card is not starred, clear all others and set this one
+                return new Set([cardIndex]);
+            }
+        });
+    };
+
     // Handlers for ellipsis menu options
     const handleRemoveCoverImage = () => {
-        console.log('Remove cover image');
-        // Add your remove cover image logic here
+        // Remove cover from all cards
+        setStarredCards(new Set());
     };
 
     const handleCopyTo = () => {
@@ -663,7 +811,11 @@ export default function CardComboModal() {
 
     const handleEllipsisClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        if (ellipsisButtonRef.current) {
+        if (ellipsisMenu) {
+            // If menu is already open, close it
+            setEllipsisMenu(null);
+        } else if (ellipsisButtonRef.current) {
+            // If menu is closed, open it
             const rect = ellipsisButtonRef.current.getBoundingClientRect();
             setEllipsisMenu({
                 x: rect.right - 160, // Position dropdown to the left of the button
@@ -674,28 +826,28 @@ export default function CardComboModal() {
 
     // Sample data for cards and list view
     const allCards = [
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Gerald's Silver Sword", bodyCopy: "A legendary silver sword forged for combating undead creatures and supernatural beings." },
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Gerald of Rivendell", bodyCopy: "Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom." },
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Steel Sword", bodyCopy: "For natural foes and human opponents, this steel blade has seen many battles." },
-        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Roach - Faithful Companion", bodyCopy: "Gerald's trusted horse, loyal and brave, has been with him through countless adventures." },
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Witcher Medallion", bodyCopy: "A silver wolf medallion that vibrates in the presence of magic and monsters." },
-        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Magic Signs", bodyCopy: "Gerald's collection of magical signs used for various combat and utility purposes." },
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Forest Spirits", bodyCopy: "Gerald's ability to communicate with forest spirits aids him in his quest for knowledge." },
-        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Elven Ancestry", bodyCopy: "Gerald's connection to his elven heritage gives him enhanced senses and longevity." },
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Emerald Eyes", bodyCopy: "His piercing emerald eyes can see through deception and into the soul." },
-        { blank: "yes" as const, images: "none" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "New Character Card", bodyCopy: "Create a new character card to expand your story world." },
-        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Character Background", bodyCopy: "Add more depth to your character's story and personality." },
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Ancient Scrolls", bodyCopy: "Mystical scrolls containing powerful spells and ancient knowledge." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Gerald's Silver Sword", bodyCopy: "A legendary silver sword forged for combating undead creatures and supernatural beings." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Gerald of Rivendell", bodyCopy: "Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Steel Sword", bodyCopy: "For natural foes and human opponents, this steel blade has seen many battles." },
+        { blank: "no" as const, images: "one" as const, mediaType: "card" as const, title: "Roach - Faithful Companion", bodyCopy: "Gerald's trusted horse, loyal and brave, has been with him through countless adventures." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Witcher Medallion", bodyCopy: "A silver wolf medallion that vibrates in the presence of magic and monsters." },
+        { blank: "no" as const, images: "one" as const, mediaType: "card" as const, title: "Magic Signs", bodyCopy: "Gerald's collection of magical signs used for various combat and utility purposes." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Forest Spirits", bodyCopy: "Gerald's ability to communicate with forest spirits aids him in his quest for knowledge." },
+        { blank: "no" as const, images: "one" as const, mediaType: "card" as const, title: "Elven Ancestry", bodyCopy: "Gerald's connection to his elven heritage gives him enhanced senses and longevity." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Emerald Eyes", bodyCopy: "His piercing emerald eyes can see through deception and into the soul." },
+        { blank: "yes" as const, images: "none" as const, mediaType: "card" as const, title: "New Character Card", bodyCopy: "Create a new character card to expand your story world." },
+        { blank: "no" as const, images: "one" as const, mediaType: "card" as const, title: "Character Background", bodyCopy: "Add more depth to your character's story and personality." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Ancient Scrolls", bodyCopy: "Mystical scrolls containing powerful spells and ancient knowledge." },
     ];
 
     // Additional cards for expanded view
     const expandedCards = [
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Dragon Scale Armor", bodyCopy: "Protective armor crafted from ancient dragon scales." },
-        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Combat Training", bodyCopy: "Years of rigorous training in sword combat and magical arts." },
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Mystical Potions", bodyCopy: "Various alchemical concoctions for healing and enhancement." },
-        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Quest Journal", bodyCopy: "A detailed record of adventures and discoveries." },
-        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Enchanted Cloak", bodyCopy: "A magical cloak that provides protection from the elements." },
-        { blank: "yes" as const, images: "none" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Add New Item", bodyCopy: "Create a new item for your character's inventory." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Dragon Scale Armor", bodyCopy: "Protective armor crafted from ancient dragon scales." },
+        { blank: "no" as const, images: "one" as const, mediaType: "card" as const, title: "Combat Training", bodyCopy: "Years of rigorous training in sword combat and magical arts." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Mystical Potions", bodyCopy: "Various alchemical concoctions for healing and enhancement." },
+        { blank: "no" as const, images: "one" as const, mediaType: "card" as const, title: "Quest Journal", bodyCopy: "A detailed record of adventures and discoveries." },
+        { blank: "no" as const, images: "many" as const, mediaType: "image" as const, title: "Enchanted Cloak", bodyCopy: "A magical cloak that provides protection from the elements." },
+        { blank: "yes" as const, images: "none" as const, mediaType: "card" as const, title: "Add New Item", bodyCopy: "Create a new item for your character's inventory." },
     ];
 
     // Get visible cards (filter out hidden ones)
@@ -705,10 +857,10 @@ export default function CardComboModal() {
 
 
     return (
-        <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto h-[80vh] max-h-[900px]" style={{ width: 'min(100vw - 2rem, 1024px)' }}>
+        <div className={`bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto transition-all duration-300 ease-out ${visibleCards.length > 0 ? 'h-[80vh] max-h-[900px]' : 'h-auto min-h-[300px]'}`} style={{ width: 'min(100vw - 2rem, 1024px)' }}>
             <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative w-full min-w-0 h-full transition-all duration-500 ease-out">
-                {/* Header - Hide when gallery is expanded */}
-                <div className={`box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative w-full transition-all duration-500 ease-out overflow-hidden ${isGalleryExpanded ? 'opacity-0 max-h-0 transform -translate-y-4' : 'opacity-100 max-h-[200px] transform translate-y-0'}`}>
+                {/* Header - Always visible */}
+                <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative w-full shrink-0">
                     <div className="basis-0 grow min-h-px min-w-px relative shrink-0">
                         <div className="relative size-full">
                             <div className="box-border content-stretch flex flex-col gap-1.5 items-start justify-start pl-6 pr-0 py-6 relative w-full">
@@ -764,11 +916,10 @@ export default function CardComboModal() {
                     </div>
                 </div>
 
-                {/* Content - Hide when gallery is expanded */}
-                {!isGalleryExpanded && (
-                    <div className="relative shrink-0 w-full">
-                        <div className="relative size-full">
-                            <div className="box-border content-stretch flex flex-col gap-4 items-start justify-start pb-6 pt-0 px-3 sm:px-6 relative w-full max-w-[768px]">
+                {/* Content - Animate when gallery is expanded */}
+                <div className={`relative w-full transition-all duration-500 ease-out ${isGalleryExpanded ? 'opacity-0 max-h-0 transform -translate-y-4' : 'opacity-100 max-h-[500px] transform translate-y-0'}`}>
+                    <div className="relative size-full">
+                        <div className="box-border content-stretch flex flex-col gap-4 items-start justify-start pb-6 pt-0 px-3 sm:px-6 relative w-full max-w-[768px]">
                                 <div className="font-hvd-regular leading-[24px] w-full not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                     <p className="block leading-[24px]">{`Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom. With silver hair cascading down his shoulders and piercing emerald eyes, he navigates the mystical realms with ease.`}</p>
                                     <br/>
@@ -798,7 +949,7 @@ export default function CardComboModal() {
                                     </div>
                                     <HoverTooltip 
                                         title="Gerald's Steel Sword" 
-                                        description="For natural foes and human opponents, this steel blade has seen many battles. Its perfectly balanced design and razor-sharp edge make it deadly in combat against mort"
+                                        description="For natural foes and human opponents, this steel blade has seen many battles. Its perfectly balanced design and razor-sharp edge make it deadly in combat against mortal enemies. The crossguard bears ancient runes that glow faintly in battle, and the leather-wrapped hilt provides perfect grip even in the heat of combat. This weapon has saved Gerald's life countless times in his adventures across the mystical realms."
                                         itemCount={12}
                                     >
                                     <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
@@ -819,7 +970,7 @@ export default function CardComboModal() {
                                         <p className="block leading-[24px]">He rides a horse named</p>
                                     </div>
                                     <HoverTooltip 
-                                        title="Roach - Faithful Companion" 
+                                        title="Roach - Faithful" 
                                         description="Gerald's trusted horse, loyal and brave, has been with him through countless adventures across the mystical realms. This intelligent mare has an uncanny ability to find her way through any terrain and responds to Gerald's whistle from great distances. Her chestnut coat gleams in the sunlight, and her eyes show the wisdom of many journeys."
                                         itemCount={6}
                                     >
@@ -835,11 +986,9 @@ export default function CardComboModal() {
                             </div>
                         </div>
                     </div>
-                )}
 
-                {/* Bottom Actions - Hide when gallery is expanded */}
-                {!isGalleryExpanded && (
-                    <div className="relative shrink-0 w-full">
+                {/* Bottom Actions - Animate when gallery is expanded */}
+                <div className={`relative w-full transition-all duration-500 ease-out ${isGalleryExpanded ? 'opacity-0 max-h-0 transform -translate-y-4' : 'opacity-100 max-h-[200px] transform translate-y-0'}`}>
                         <div className="relative size-full">
                             <div className="box-border content-stretch flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between pb-6 pt-0 px-3 sm:px-6 gap-2.5 sm:gap-0 relative w-full">
                                 <div className="box-border content-stretch flex flex-col sm:flex-row gap-2.5 items-center justify-start p-0 relative shrink-0 w-full sm:w-auto">
@@ -851,17 +1000,19 @@ export default function CardComboModal() {
                                             </div>
                                         </div>
                                     </div>
-                                    <button 
-                                        onClick={() => setShowFilters(!showFilters)}
-                                        className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
-                                    >
-                                        <Filter className="w-4 h-4 text-purple-800" strokeWidth={2} />
-                                        <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0 sm:hidden">
-                                            <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
-                                                <p className="block leading-[20px]">FILTER</p>
+                                    {visibleCards.length > 0 && (
+                                        <button 
+                                            onClick={() => setShowFilters(!showFilters)}
+                                            className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                                        >
+                                            <Filter className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                            <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0 sm:hidden">
+                                                <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
+                                                    <p className="block leading-[20px]">FILTER</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </button>
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="basis-0 grow min-h-px min-w-px self-stretch shrink-0 hidden sm:block"/>
                                 <div className="bg-purple-800 hover:bg-slate-800 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer">
@@ -874,16 +1025,14 @@ export default function CardComboModal() {
                             </div>
                         </div>
                     </div>
-                )}
 
-                {/* Separator - Hide when gallery is expanded */}
-                {!isGalleryExpanded && (
-                    <div className="box-border content-stretch flex flex-col items-start justify-start p-0 relative shrink-0 w-full">
-                        <Separator />
-                    </div>
-                )}
+                {/* Separator - Always visible */}
+                <div className="box-border content-stretch flex flex-col items-start justify-start p-0 relative shrink-0 w-full">
+                    <Separator />
+                </div>
 
-                {/* Tabs and Cards Section */}
+                {/* Tabs and Cards Section - Only show if there are cards */}
+                {visibleCards.length > 0 && (
                 <div className={`bg-slate-100 box-border content-stretch flex flex-col items-start justify-start pb-0 pt-0 px-0 relative w-full overflow-hidden transition-all duration-500 ease-out ${isGalleryExpanded ? 'flex-1' : 'flex-1'}`}>
                     {/* Tabs Header */}
                     <div className={`bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full border-b border-slate-200 overflow-hidden transition-all duration-500 ease-out ${showFilters || isGalleryExpanded ? 'opacity-100 max-h-[120px] min-h-[58px] py-3 lg:py-0' : 'opacity-0 max-h-0 py-0'}`}>
@@ -957,23 +1106,29 @@ export default function CardComboModal() {
                                 )}
                             </button>
                             
-                            {/* Expand/Collapse Button */}
+                            {/* Expand/Collapse Button - Hidden on mobile */}
                             <button
                                 onClick={() => setIsGalleryExpanded(!isGalleryExpanded)}
-                                className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
-                                title={isGalleryExpanded ? "Collapse gallery" : "Expand gallery"}
+                                className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-2 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer hidden lg:flex"
+                                title={isGalleryExpanded ? "Show content" : "Hide content"}
                             >
                                 {isGalleryExpanded ? (
-                                    <Minimize2 className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                    <ChevronDown className="w-4 h-4 text-purple-800" strokeWidth={2} />
                                 ) : (
-                                    <Maximize2 className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                    <ChevronUp className="w-4 h-4 text-purple-800" strokeWidth={2} />
                                 )}
                             </button>
                         </div>
                     </div>
 
                     {/* Cards Grid / List View */}
-                    <div className="relative flex-1 w-full min-w-0 overflow-y-auto">
+                    <div className="relative flex-1 w-full min-w-0 overflow-y-auto" ref={cardsContainerRef}>
+                        {/* Mobile scroll hint - only shown on mobile when gallery is not expanded */}
+                        {isMobile && !isGalleryExpanded && visibleCards.length > 6 && (
+                            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 bg-slate-800 text-white text-xs px-3 py-1 rounded-full opacity-60 pointer-events-none lg:hidden transition-opacity duration-300">
+                                Scroll to see more
+                            </div>
+                        )}
                         <div className="relative size-full min-w-0">
                             {viewMode === 'card' ? (
                                 /* Card Grid View */
@@ -981,16 +1136,18 @@ export default function CardComboModal() {
                                     {visibleCards.map((card, _) => {
                                         // Find the original index in displayCards for proper card deletion tracking
                                         const originalIndex = displayCards.findIndex(c => c === card);
+                                        const isStarred = starredCards.has(originalIndex);
                                         return (
                                             <div key={originalIndex} className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
                                                 <CardItem 
                                                     blank={card.blank}
                                                     images={card.images}
-                                                    imageStarred={card.imageStarred}
+                                                    imageStarred={isStarred ? "yes" : "no"}
                                                     mediaType={card.mediaType}
                                                     bodyCopy={card.bodyCopy}
                                                     cardIndex={originalIndex}
                                                     onDelete={handleDeleteCard}
+                                                    onSetCover={handleSetCover}
                                                 />
                                             </div>
                                         );
@@ -1018,12 +1175,13 @@ export default function CardComboModal() {
                                     <div>
                                         {visibleCards.slice(0, isGalleryExpanded ? visibleCards.length : 10).map((card, visibleIndex) => {
                                             const originalIndex = displayCards.findIndex(c => c === card);
+                                            const isStarred = starredCards.has(originalIndex);
                                             return (
                                             <ListViewItem 
                                                     key={originalIndex}
                                                     title={card.title}
                                                     bodyCopy={card.bodyCopy}
-                                                    imageStarred={card.imageStarred}
+                                                    imageStarred={isStarred ? "yes" : "no"}
                                                     mediaType={card.mediaType}
                                                     index={visibleIndex}
                                                 />
@@ -1036,6 +1194,7 @@ export default function CardComboModal() {
                         </div>
                     </div>
                 </div>
+                )}
             </div>
             <div className="absolute border-4 border-white border-solid inset-0 pointer-events-none rounded-3xl shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.05),0px_8px_10px_-6px_rgba(0,0,0,0.05)]"/>
             
@@ -1045,12 +1204,13 @@ export default function CardComboModal() {
                     x={ellipsisMenu.x}
                     y={ellipsisMenu.y}
                     onClose={() => setEllipsisMenu(null)}
+                    excludeRefs={[ellipsisButtonRef]}
                     items={[
-                        {
-                            label: 'Remove cover image',
+                        ...(starredCards.size > 0 ? [{
+                            label: 'Remove cover',
                             icon: Star,
                             onClick: handleRemoveCoverImage
-                        },
+                        }] : []),
                         {
                             label: 'Copy to..',
                             icon: Copy,
