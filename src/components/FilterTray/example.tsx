@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import FilterTray from './FilterTray';
 import { filterItems } from './utils';
 import { FilterableItem } from './types';
