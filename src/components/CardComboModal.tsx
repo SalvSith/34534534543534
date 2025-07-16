@@ -702,13 +702,7 @@ export default function CardComboModal() {
     const displayCards = isGalleryExpanded ? [...allCards, ...expandedCards] : allCards;
     const visibleCards = displayCards.filter((_, index) => !hiddenCards.has(index));
 
-    // Sample data for list view (based on cards data)
-    const listItems = allCards.map(card => ({
-        title: card.title,
-        bodyCopy: card.bodyCopy,
-        imageStarred: card.imageStarred,
-        mediaType: card.mediaType
-    }));
+
 
     return (
         <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto h-[80vh] max-h-[900px]" style={{ width: 'min(100vw - 2rem, 1024px)' }}>
@@ -984,7 +978,7 @@ export default function CardComboModal() {
                             {viewMode === 'card' ? (
                                 /* Card Grid View */
                                 <div className="box-border content-stretch grid gap-4 items-start justify-start pb-6 pt-6 px-3 sm:px-6 relative w-full min-w-0 transition-all duration-300 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                                    {visibleCards.map((card, visibleIndex) => {
+                                    {visibleCards.map((card, _) => {
                                         // Find the original index in displayCards for proper card deletion tracking
                                         const originalIndex = displayCards.findIndex(c => c === card);
                                         return (
