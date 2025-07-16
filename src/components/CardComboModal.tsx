@@ -14,13 +14,183 @@ import {
   Maximize2,
   Minimize2,
   List,
-  Grid3x3
+  Grid3x3,
+  Eye,
+  Trash2,
+  Copy,
+  FolderOpen
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 // Asset URLs for character images - using placeholder for now but keeping original structure
 const imgFrame184 = "https://picsum.photos/290/363?random=1";
-const img1 = "https://picsum.photos/32/32?random=2";
+const imgAvatar = "https://picsum.photos/32/32?random=2";
+
+// Assets from Figma design for hover tooltip - exact variable names from Figma
+const imgImage = "http://localhost:3845/assets/9d6dcfc1fb8cd40116ca161e463af1ee400a729e.png";
+const imgImage1 = "http://localhost:3845/assets/6f081d00eeabb5809fcfb633f13f1a4e2f2f0ac9.png";
+const imgFrame187 = "http://localhost:3845/assets/c04ea38bdfac0fc122878ebddc6b5db3806ff2e7.png";
+const imgFrame185 = "http://localhost:3845/assets/35deda4ec38b232bcb6f601a8269e7017ba84a09.png";
+const imgFrame186 = "http://localhost:3845/assets/fa84f6c3eada06d932b2bd74c8ff8e35375bc615.png";
+const imgHexagon = "http://localhost:3845/assets/d090f3ed711491b6d26d07800ce108242a362927.svg";
+const imgPlus = "http://localhost:3845/assets/7bac326c57b9f7353e78a7b7bf2380cc8cac46cb.svg";
+
+// Hover tooltip component - EXACT 1:1 copy from Figma frame
+interface HoverTooltipProps {
+    children: React.ReactNode;
+    title?: string;
+    description?: string;
+    itemCount?: number;
+}
+
+function HoverTooltip({ children, title = "Gerald of Rivendell", description = "Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom. With silver hair cascading down his shoulders and piercing emerald eyes, he navigates the mystical realms with ease. His expertise in magic and combat makes him a formidable ally, while his deep connection to nature allows him to communicate with the forest spirits. Gerald's quest for knowledge and justice drives him to protect the innocent and uphold the balance between worlds.", itemCount = 10 }: HoverTooltipProps) {
+    const [isVisible, setIsVisible] = useState(false);
+    const [isHoveringTooltip, setIsHoveringTooltip] = useState(false);
+    const timeoutRef = useRef<number | null>(null);
+
+    const handleMouseEnter = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+        setIsVisible(true);
+    };
+
+    const handleMouseLeave = () => {
+        if (!isHoveringTooltip) {
+            timeoutRef.current = setTimeout(() => {
+                setIsVisible(false);
+            }, 100);
+        }
+    };
+
+    const handleTooltipEnter = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+        setIsHoveringTooltip(true);
+    };
+
+    const handleTooltipLeave = () => {
+        setIsHoveringTooltip(false);
+        timeoutRef.current = setTimeout(() => {
+            setIsVisible(false);
+        }, 100);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    return (
+        <div 
+            className="relative inline-block"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+            {children}
+            {isVisible && (
+                <div 
+                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 pointer-events-auto"
+                    onMouseEnter={handleTooltipEnter}
+                    onMouseLeave={handleTooltipLeave}
+                >
+                    {/* Figma frame - reduced by 45% while maintaining proportions */}
+                    <div className="bg-[#ffffff] relative rounded-xl w-[176px] h-[220px]" data-name="Hover Tooltip Card">
+                        <div className="box-border content-stretch flex flex-col items-start justify-start overflow-clip p-0 relative size-full">
+                            {/* Background image with overlay */}
+                            <div className="absolute bg-center bg-cover bg-no-repeat inset-0 rounded-xl" style={{ backgroundImage: `url('${imgImage1}')` }}/>
+                            <div className="absolute backdrop-blur backdrop-filter bg-gradient-to-t from-[#f8fafc80] inset-0 rounded-xl to-[#f8fafccc]"/>
+                            
+                            {/* Header section with title and action */}
+                            <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative shrink-0 w-full">
+                                <div className="basis-0 grow min-h-px min-w-px relative shrink-0">
+                                    <div className="relative size-full">
+                                        <div className="box-border content-stretch flex flex-col gap-1 items-start justify-start leading-[0] not-italic pb-2 pl-3 pr-0 pt-3 relative text-left text-slate-950 w-full">
+                                            <div className={`font-['HvDTrial_Brandon_Grotesque:Medium',_sans-serif] font-medium relative shrink-0 tracking-[-0.3px] w-full transition-all duration-200 ${isVisible ? 'text-[12px]' : 'text-[11px]'}`}>
+                                                <p className="block leading-none">{title}</p>
+                                            </div>
+                                            <div className={`font-['HvDTrial_Brandon_Grotesque:Regular',_sans-serif] font-normal relative shrink-0 w-full transition-all duration-200 ${isVisible ? 'text-[10px]' : 'text-[8px]'}`}>
+                                                <p className="block leading-[11px]">{itemCount} items</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="shrink-0 size-8"/>
+                                
+                                {/* Add to campaign button */}
+                                <div className="absolute box-border content-stretch flex flex-row items-center justify-end left-2 overflow-clip pl-2 pr-1 py-1 right-2 rounded-xl top-2">
+                                    <div className="relative shrink-0 size-6">
+                                        <div className="absolute bottom-[20%] left-[22.5%] right-[22.5%] top-[20%]">
+                                            <img alt="" className="block max-w-none size-full" src={imgHexagon}/>
+                                        </div>
+                                        <div className="absolute inset-[40%]">
+                                            <img alt="" className="block max-w-none size-full" src={imgPlus}/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Content section */}
+                            <div className="basis-0 grow min-h-px min-w-px relative shrink-0 w-full">
+                                <div className="relative size-full">
+                                    <div className="box-border content-stretch flex flex-col gap-2 items-start justify-start pb-3 pt-0 px-3 relative size-full">
+                                        <div className="line-clamp-1 basis-0 font-['HvDTrial_Brandon_Grotesque:Regular',_sans-serif] font-normal grow min-h-px min-w-px not-italic opacity-80 relative shrink-0 text-[11px] text-left text-slate-950 w-full overflow-hidden text-ellipsis">
+                                            <p className="block leading-[16px]">{description}</p>
+                                        </div>
+                                        
+                                        {/* Thumbnail images - scaled down proportionally */}
+                                        <div className="box-border content-stretch flex flex-row-reverse gap-0.5 items-start justify-start p-0 relative shrink-0">
+                                            <div className="bg-center bg-cover bg-no-repeat h-[41px] order-4 relative rounded-md shrink-0 w-[36px] hover:scale-105 transition-transform duration-200 cursor-pointer" style={{ backgroundImage: `url('${imgImage1}')` }}>
+                                                <div className="absolute border border-[#ffffff] border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1),0px_1px_1px_-1px_rgba(0,0,0,0.1)]"/>
+                                            </div>
+                                            <div className="[background-size:cover,_auto] bg-[#ffffff] bg-[position:50%_50%,_0%_0%] h-[41px] order-3 relative rounded-md shrink-0 w-[36px] hover:scale-105 transition-transform duration-200 cursor-pointer" style={{ backgroundImage: `url('${imgFrame187}')` }}>
+                                                <div className="absolute border border-[#ffffff] border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1),0px_1px_1px_-1px_rgba(0,0,0,0.1)]"/>
+                                            </div>
+                                            <div className="[background-size:cover,_auto] bg-[#ffffff] bg-[position:50%_50%,_0%_0%] h-[41px] order-2 relative rounded-md shrink-0 w-[36px] hover:scale-105 transition-transform duration-200 cursor-pointer" style={{ backgroundImage: `url('${imgFrame185}')` }}>
+                                                <div className="absolute border border-[#ffffff] border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1),0px_1px_1px_-1px_rgba(0,0,0,0.1)]"/>
+                                            </div>
+                                            <div className="[background-size:cover,_auto] bg-[#ffffff] bg-[position:50%_50%,_0%_0%] h-[41px] order-1 relative rounded-md shrink-0 w-[36px] hover:scale-105 transition-transform duration-200 cursor-pointer" style={{ backgroundImage: `url('${imgFrame186}')` }}>
+                                                <div className="absolute border border-[#ffffff] border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1),0px_1px_1px_-1px_rgba(0,0,0,0.1)]"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Avatar section */}
+                            <div className="relative shrink-0 w-full">
+                                <div className="flex flex-col items-end justify-end relative size-full">
+                                    <div className="box-border content-stretch flex flex-col gap-2 items-end justify-end pb-3 pt-0 px-3 relative w-full">
+                                        <div className="relative rounded-[9999px] shrink-0">
+                                            <div className="box-border content-stretch flex flex-row items-center justify-start overflow-clip p-0 relative">
+                                                <div className="bg-center bg-cover bg-no-repeat rounded-[9999px] shrink-0 size-4" style={{ backgroundImage: `url('${imgImage}')` }}/>
+                                            </div>
+                                            <div className="absolute border border-slate-200 border-solid inset-0 pointer-events-none rounded-[9999px]"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Scaled border */}
+                        <div className="absolute border-2 border-[#ffffff] border-solid inset-0 pointer-events-none rounded-xl shadow-[0px_1px_2px_0px_rgba(0,0,0,0.1),0px_1px_1px_-1px_rgba(0,0,0,0.1)]"/>
+                    </div>
+                    
+                    {/* Tooltip arrow */}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+                        <div className="w-3 h-3 bg-white border-r border-b border-white rotate-45 transform -translate-y-1/2 shadow-sm"/>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 function LucideIconsChevronRight() {
     return (
@@ -64,6 +234,106 @@ function Separator() {
     );
 }
 
+// Context Menu Component
+interface MenuItem {
+    label: string;
+    icon: React.ComponentType<any>;
+    onClick: () => void;
+    variant?: 'default' | 'danger';
+}
+
+interface ContextMenuProps {
+    x: number;
+    y: number;
+    onClose: () => void;
+    items: MenuItem[];
+}
+
+function ContextMenu({ x, y, onClose, items }: ContextMenuProps) {
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                onClose();
+            }
+        };
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+        
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [onClose]);
+
+    // Adjust position if menu would go off screen
+    useEffect(() => {
+        if (menuRef.current) {
+            const rect = menuRef.current.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            let adjustedX = x;
+            let adjustedY = y;
+            
+            if (x + rect.width > viewportWidth) {
+                adjustedX = viewportWidth - rect.width - 8;
+            }
+            
+            if (y + rect.height > viewportHeight) {
+                adjustedY = viewportHeight - rect.height - 8;
+            }
+            
+            menuRef.current.style.left = `${adjustedX}px`;
+            menuRef.current.style.top = `${adjustedY}px`;
+        }
+    }, [x, y]);
+
+    return (
+        <div
+            ref={menuRef}
+            className="fixed z-50 bg-white rounded-xl min-w-32 border border-slate-200 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)]"
+            style={{ left: x, top: y }}
+            data-name="Context Menu"
+        >
+            <div className="flex flex-col p-1">
+                {items.map((item, index) => {
+                    const Icon = item.icon;
+                    const isDanger = item.variant === 'danger';
+                    
+                    return (
+                        <button
+                            key={index}
+                            onClick={() => {
+                                item.onClick();
+                                onClose();
+                            }}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors duration-200 w-full text-left ${
+                                isDanger ? 'hover:bg-red-50' : 'hover:bg-slate-100'
+                            }`}
+                        >
+                            <Icon className={`w-4 h-4 ${isDanger ? 'text-red-500' : 'text-slate-500'}`} strokeWidth={2} />
+                            <span className={`font-hvd-regular text-[14px] leading-[20px] ${
+                                isDanger ? 'text-red-600' : 'text-slate-950'
+                            }`}>
+                                {item.label}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 interface CardItemProps {
     bodyCopy?: string;
     blank?: 'no' | 'yes';
@@ -71,6 +341,8 @@ interface CardItemProps {
     state?: 'Default' | 'hover';
     imageStarred?: 'no' | 'yes';
     mediaType?: 'collection' | 'card' | 'image';
+    cardIndex?: number;
+    onDelete?: (cardIndex: number) => void;
 }
 
 function CardItem({ 
@@ -79,8 +351,36 @@ function CardItem({
     images = "none",
     state = "Default",
     imageStarred = "no",
-    mediaType = "card"
+    mediaType = "card",
+    cardIndex,
+    onDelete
 }: CardItemProps) {
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+    const handleRightClick = (e: React.MouseEvent) => {
+        // Only show context menu for image cards
+        if (mediaType === 'image') {
+            e.preventDefault();
+            setContextMenu({ x: e.clientX, y: e.clientY });
+        }
+    };
+
+    const handleView = () => {
+        console.log('View image card');
+        // Add your view logic here
+    };
+
+    const handleSetCover = () => {
+        console.log('Set cover image');
+        // Add your set cover logic here
+    };
+
+    const handleDelete = () => {
+        if (cardIndex !== undefined && onDelete) {
+            onDelete(cardIndex);
+        }
+    };
+
     const element = (
         <div className="absolute border-2 border-slate-200 border-solid inset-0 pointer-events-none rounded-full"/>
     );
@@ -90,7 +390,11 @@ function CardItem({
 
     if (blank === 'no' && images === 'many' && state === 'Default' && imageStarred === 'yes' && mediaType === 'image') {
         return (
-            <div className="relative rounded-3xl size-full bg-white">
+            <>
+                <div 
+                    className="relative rounded-3xl size-full bg-white"
+                    onContextMenu={handleRightClick}
+                >
                 <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative size-full">
                     <div className="absolute aspect-[290/363] bg-center bg-cover bg-no-repeat left-0 right-0 rounded-3xl top-1/2 translate-y-[-50%]" style={{ backgroundImage: `url('${imgFrame184}')` }}/>
                     <div className="basis-0 grow min-h-px min-w-px relative shrink-0 w-full">
@@ -103,7 +407,7 @@ function CardItem({
                             <div className="box-border content-stretch flex flex-col gap-4 items-end justify-end pb-6 pt-0 px-6 relative w-full">
                                 <div className="relative rounded-full shrink-0">
                                     <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden p-0 relative">
-                                        <div className="bg-center bg-cover bg-no-repeat rounded-full shrink-0 size-8" style={{ backgroundImage: `url('${img1}')` }}/>
+                                            <div className="bg-center bg-cover bg-no-repeat rounded-full shrink-0 size-8" style={{ backgroundImage: `url('${imgAvatar}')` }}/>
                                     </div>
                                     {element}
                                 </div>
@@ -116,6 +420,34 @@ function CardItem({
                 </div>
                 {element1}
             </div>
+                
+                {/* Context Menu */}
+                {contextMenu && (
+                    <ContextMenu
+                        x={contextMenu.x}
+                        y={contextMenu.y}
+                        onClose={() => setContextMenu(null)}
+                        items={[
+                            {
+                                label: 'View',
+                                icon: Eye,
+                                onClick: handleView
+                            },
+                            {
+                                label: 'Set cover image',
+                                icon: Star,
+                                onClick: handleSetCover
+                            },
+                            {
+                                label: 'Delete',
+                                icon: Trash2,
+                                onClick: handleDelete,
+                                variant: 'danger' as const
+                            }
+                        ]}
+                    />
+                )}
+            </>
         );
     }
 
@@ -138,8 +470,8 @@ function CardItem({
                     <div className="basis-0 grow min-h-px min-w-px relative shrink-0 w-full">
                         <div className="relative size-full">
                             <div className="box-border content-stretch flex flex-col gap-4 items-start justify-start pb-6 pt-0 px-6 relative size-full">
-                                <div className="basis-0 font-hvd-regular grow min-h-px min-w-px not-italic opacity-80 overflow-ellipsis overflow-hidden relative shrink-0 text-[16px] text-left text-slate-950 w-full leading-[24px]">
-                                    <p className="block leading-[24px]">{bodyCopy}</p>
+                                <div className="basis-0 font-hvd-regular grow min-h-px min-w-px not-italic opacity-80 overflow-hidden text-ellipsis relative shrink-0 text-[16px] text-left text-slate-950 w-full leading-[24px] line-clamp-2">
+                                    <p className="block leading-[24px] line-clamp-2">{bodyCopy}</p>
                                 </div>
                                 <div className="box-border content-stretch flex flex-row-reverse gap-1 items-start justify-start p-0 relative shrink-0">
                                     <div className="bg-center bg-cover bg-no-repeat aspect-[65/75] order-1 relative rounded-lg shrink-0 w-16 sm:w-[65px]" style={{ backgroundImage: `url('${imgFrame184}')` }}>
@@ -154,7 +486,7 @@ function CardItem({
                             <div className="box-border content-stretch flex flex-col gap-4 items-end justify-end pb-6 pt-0 px-6 relative w-full">
                                 <div className="relative rounded-full shrink-0">
                                     <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden p-0 relative">
-                                        <div className="bg-center bg-cover bg-no-repeat rounded-full shrink-0 size-8" style={{ backgroundImage: `url('${img1}')` }}/>
+                                        <div className="bg-center bg-cover bg-no-repeat rounded-full shrink-0 size-8" style={{ backgroundImage: `url('${imgAvatar}')` }}/>
                                     </div>
                                     {element}
                                 </div>
@@ -186,7 +518,7 @@ function CardItem({
                 <div className="basis-0 grow min-h-px min-w-px relative shrink-0 w-full">
                     <div className="relative size-full">
                         <div className="box-border content-stretch flex flex-col gap-4 items-start justify-start pb-6 pt-0 px-6 relative size-full">
-                            <div className="basis-0 font-hvd-regular grow leading-[24px] min-h-px min-w-px not-italic opacity-80 overflow-ellipsis overflow-hidden relative shrink-0 text-[16px] text-left text-slate-950 w-full">
+                            <div className="basis-0 font-hvd-regular grow leading-[24px] min-h-px min-w-px not-italic opacity-80 overflow-hidden text-ellipsis relative shrink-0 text-[16px] text-left text-slate-950 w-full line-clamp-2">
                                 <p className="block mb-0">Your card text here...</p>
                                 <p className="block mb-0">Associate other cards with @card</p>
                                 <p className="block">Organise your library with #tags</p>
@@ -199,7 +531,7 @@ function CardItem({
                         <div className="box-border content-stretch flex flex-col gap-4 items-end justify-end pb-6 pt-0 px-6 relative w-full">
                             <div className="relative rounded-full shrink-0">
                                 <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden p-0 relative">
-                                    <div className="bg-center bg-cover bg-no-repeat rounded-full shrink-0 size-8" style={{ backgroundImage: `url('${img1}')` }}/>
+                                    <div className="bg-center bg-cover bg-no-repeat rounded-full shrink-0 size-8" style={{ backgroundImage: `url('${imgAvatar}')` }}/>
                                 </div>
                                 {element}
                             </div>
@@ -258,7 +590,7 @@ function ListViewItem({
                             <h3 className="font-hvd-medium text-[16px] text-slate-950 leading-tight mb-1 truncate">
                                 {title}
                             </h3>
-                            <p className="font-hvd-regular text-[14px] text-slate-600 leading-[20px] line-clamp-2">
+                            <p className="font-hvd-regular text-[14px] text-slate-600 leading-[20px] line-clamp-2 overflow-hidden text-ellipsis">
                                 {bodyCopy}
                             </p>
                         </div>
@@ -281,7 +613,7 @@ function ListViewItem({
                             <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-200">
                                 <div 
                                     className="w-full h-full bg-center bg-cover bg-no-repeat"
-                                    style={{ backgroundImage: `url('${img1}')` }}
+                                    style={{ backgroundImage: `url('${imgAvatar}')` }}
                                 />
                             </div>
                         </div>
@@ -299,20 +631,84 @@ export default function CardComboModal() {
     const [searchFocused, setSearchFocused] = useState(false);
     const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+    const [hiddenCards, setHiddenCards] = useState<Set<number>>(new Set());
+    const [ellipsisMenu, setEllipsisMenu] = useState<{ x: number; y: number } | null>(null);
+    const ellipsisButtonRef = useRef<HTMLDivElement>(null);
 
-    // Sample data for list view
-    const listItems = [
-        { title: "Gerald's Silver Sword", bodyCopy: "A legendary silver sword forged for combating undead creatures and supernatural beings.", imageStarred: "yes" as const, mediaType: "image" as const },
-        { title: "Gerald of Rivendell", bodyCopy: "Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom.", imageStarred: "yes" as const, mediaType: "image" as const },
-        { title: "Roach - Faithful Companion", bodyCopy: "Gerald's trusted horse, loyal and brave, has been with him through countless adventures.", imageStarred: "no" as const, mediaType: "card" as const },
-        { title: "Steel Sword", bodyCopy: "For natural foes and human opponents, this steel blade has seen many battles.", imageStarred: "yes" as const, mediaType: "image" as const },
-        { title: "Magic Signs", bodyCopy: "Gerald's collection of magical signs used for various combat and utility purposes.", imageStarred: "no" as const, mediaType: "card" as const },
-        { title: "Witcher Medallion", bodyCopy: "A silver wolf medallion that vibrates in the presence of magic and monsters.", imageStarred: "yes" as const, mediaType: "image" as const },
-        { title: "Elven Ancestry", bodyCopy: "Gerald's connection to his elven heritage gives him enhanced senses and longevity.", imageStarred: "no" as const, mediaType: "card" as const },
-        { title: "Forest Spirits", bodyCopy: "Gerald's ability to communicate with forest spirits aids him in his quest for knowledge.", imageStarred: "yes" as const, mediaType: "image" as const },
-        { title: "Emerald Eyes", bodyCopy: "His piercing emerald eyes can see through deception and into the soul.", imageStarred: "no" as const, mediaType: "card" as const },
-        { title: "New Character Card", bodyCopy: "Create a new character card to expand your story world.", imageStarred: "no" as const, mediaType: "card" as const },
+    // Handler for deleting cards
+    const handleDeleteCard = (cardIndex: number) => {
+        setHiddenCards(prev => new Set([...prev, cardIndex]));
+    };
+
+    // Handlers for ellipsis menu options
+    const handleRemoveCoverImage = () => {
+        console.log('Remove cover image');
+        // Add your remove cover image logic here
+    };
+
+    const handleCopyTo = () => {
+        console.log('Copy to...');
+        // Add your copy logic here
+    };
+
+    const handleMoveTo = () => {
+        console.log('Move to...');
+        // Add your move logic here
+    };
+
+    const handleDeleteCardFromMenu = () => {
+        console.log('Delete card');
+        // Add your delete card logic here
+    };
+
+    const handleEllipsisClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (ellipsisButtonRef.current) {
+            const rect = ellipsisButtonRef.current.getBoundingClientRect();
+            setEllipsisMenu({
+                x: rect.right - 160, // Position dropdown to the left of the button
+                y: rect.bottom + 4   // Position below the button with small gap
+            });
+        }
+    };
+
+    // Sample data for cards and list view
+    const allCards = [
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Gerald's Silver Sword", bodyCopy: "A legendary silver sword forged for combating undead creatures and supernatural beings." },
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Gerald of Rivendell", bodyCopy: "Gerald of Rivendell, a graceful Witcher Elf, is known for his unmatched agility and wisdom." },
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Steel Sword", bodyCopy: "For natural foes and human opponents, this steel blade has seen many battles." },
+        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Roach - Faithful Companion", bodyCopy: "Gerald's trusted horse, loyal and brave, has been with him through countless adventures." },
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Witcher Medallion", bodyCopy: "A silver wolf medallion that vibrates in the presence of magic and monsters." },
+        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Magic Signs", bodyCopy: "Gerald's collection of magical signs used for various combat and utility purposes." },
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Forest Spirits", bodyCopy: "Gerald's ability to communicate with forest spirits aids him in his quest for knowledge." },
+        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Elven Ancestry", bodyCopy: "Gerald's connection to his elven heritage gives him enhanced senses and longevity." },
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Emerald Eyes", bodyCopy: "His piercing emerald eyes can see through deception and into the soul." },
+        { blank: "yes" as const, images: "none" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "New Character Card", bodyCopy: "Create a new character card to expand your story world." },
+        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Character Background", bodyCopy: "Add more depth to your character's story and personality." },
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Ancient Scrolls", bodyCopy: "Mystical scrolls containing powerful spells and ancient knowledge." },
     ];
+
+    // Additional cards for expanded view
+    const expandedCards = [
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Dragon Scale Armor", bodyCopy: "Protective armor crafted from ancient dragon scales." },
+        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Combat Training", bodyCopy: "Years of rigorous training in sword combat and magical arts." },
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Mystical Potions", bodyCopy: "Various alchemical concoctions for healing and enhancement." },
+        { blank: "no" as const, images: "one" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Quest Journal", bodyCopy: "A detailed record of adventures and discoveries." },
+        { blank: "no" as const, images: "many" as const, imageStarred: "yes" as const, mediaType: "image" as const, title: "Enchanted Cloak", bodyCopy: "A magical cloak that provides protection from the elements." },
+        { blank: "yes" as const, images: "none" as const, imageStarred: "no" as const, mediaType: "card" as const, title: "Add New Item", bodyCopy: "Create a new item for your character's inventory." },
+    ];
+
+    // Get visible cards (filter out hidden ones)
+    const displayCards = isGalleryExpanded ? [...allCards, ...expandedCards] : allCards;
+    const visibleCards = displayCards.filter((_, index) => !hiddenCards.has(index));
+
+    // Sample data for list view (based on cards data)
+    const listItems = allCards.map(card => ({
+        title: card.title,
+        bodyCopy: card.bodyCopy,
+        imageStarred: card.imageStarred,
+        mediaType: card.mediaType
+    }));
 
     return (
         <div className="bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto h-[80vh] max-h-[900px]" style={{ width: 'min(100vw - 2rem, 1024px)' }}>
@@ -353,7 +749,11 @@ export default function CardComboModal() {
                                 onClick={() => setCampaignActive(!campaignActive)}
                             />
                         </div>
-                        <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10 cursor-pointer hover:bg-slate-200 rounded-lg transition-colors duration-200 p-1">
+                        <div 
+                            ref={ellipsisButtonRef}
+                            onClick={handleEllipsisClick}
+                            className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10 cursor-pointer hover:bg-slate-200 rounded-lg transition-colors duration-200 p-1"
+                        >
                             <img 
                                 src="/Icon Button.svg" 
                                 alt="More options" 
@@ -386,6 +786,11 @@ export default function CardComboModal() {
                                     <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                         <p className="block leading-[24px]">He has a</p>
                                     </div>
+                                    <HoverTooltip 
+                                        title="Gerald's Silver Sword" 
+                                        description="A legendary silver sword forged for combating undead creatures and supernatural beings. This enchanted blade glows with a soft silver light when monsters are near, and its edge never dulls. Crafted by the finest elven smiths of Rivendell, it has been passed down through generations of monster hunters."
+                                        itemCount={8}
+                                    >
                                     <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
                                         <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
                                         <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
@@ -393,9 +798,15 @@ export default function CardComboModal() {
                                             <p className="block leading-none">Silver sword</p>
                                         </div>
                                     </div>
+                                    </HoverTooltip>
                                     <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                         <p className="block leading-[24px]">{`for combatting undead forces and a `}</p>
                                     </div>
+                                    <HoverTooltip 
+                                        title="Gerald's Steel Sword" 
+                                        description="For natural foes and human opponents, this steel blade has seen many battles. Its perfectly balanced design and razor-sharp edge make it deadly in combat against mort"
+                                        itemCount={12}
+                                    >
                                     <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
                                         <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
                                         <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
@@ -403,6 +814,7 @@ export default function CardComboModal() {
                                             <p className="block leading-none">Steel sword</p>
                                         </div>
                                     </div>
+                                    </HoverTooltip>
                                     <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                         <p className="block leading-[24px]">for natural foes</p>
                                     </div>
@@ -412,6 +824,11 @@ export default function CardComboModal() {
                                     <div className="font-hvd-regular leading-[24px] not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                         <p className="block leading-[24px]">He rides a horse named</p>
                                     </div>
+                                    <HoverTooltip 
+                                        title="Roach - Faithful Companion" 
+                                        description="Gerald's trusted horse, loyal and brave, has been with him through countless adventures across the mystical realms. This intelligent mare has an uncanny ability to find her way through any terrain and responds to Gerald's whistle from great distances. Her chestnut coat gleams in the sunlight, and her eyes show the wisdom of many journeys."
+                                        itemCount={6}
+                                    >
                                     <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
                                         <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
                                         <File className="w-4 h-4 text-slate-950" strokeWidth={2} />
@@ -419,6 +836,7 @@ export default function CardComboModal() {
                                             <p className="block leading-none">Roach</p>
                                         </div>
                                     </div>
+                                    </HoverTooltip>
                                 </div>
                             </div>
                         </div>
@@ -566,65 +984,23 @@ export default function CardComboModal() {
                             {viewMode === 'card' ? (
                                 /* Card Grid View */
                                 <div className="box-border content-stretch grid gap-4 items-start justify-start pb-6 pt-6 px-3 sm:px-6 relative w-full min-w-0 transition-all duration-300 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="yes"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                    </div>
-                                    <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                        <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                    </div>
-                                    {/* Additional cards for expanded view */}
-                                    {isGalleryExpanded && (
-                                        <>
-                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                                <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
+                                    {visibleCards.map((card, visibleIndex) => {
+                                        // Find the original index in displayCards for proper card deletion tracking
+                                        const originalIndex = displayCards.findIndex(c => c === card);
+                                        return (
+                                            <div key={originalIndex} className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
+                                                <CardItem 
+                                                    blank={card.blank}
+                                                    images={card.images}
+                                                    imageStarred={card.imageStarred}
+                                                    mediaType={card.mediaType}
+                                                    bodyCopy={card.bodyCopy}
+                                                    cardIndex={originalIndex}
+                                                    onDelete={handleDeleteCard}
+                                                />
                                             </div>
-                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                                <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                            </div>
-                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                                <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                            </div>
-                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                                <CardItem blank="no" images="one" imageStarred="no" mediaType="card"/>
-                                            </div>
-                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                                <CardItem blank="no" images="many" imageStarred="yes" mediaType="image"/>
-                                            </div>
-                                            <div className="bg-white relative rounded-3xl w-full aspect-[290/363] min-w-0 max-w-[320px] mx-auto lg:mx-0">
-                                                <CardItem blank="yes"/>
-                                            </div>
-                                        </>
-                                    )}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 /* List View */
@@ -646,16 +1022,19 @@ export default function CardComboModal() {
                                     
                                     {/* List Items */}
                                     <div>
-                                        {listItems.slice(0, isGalleryExpanded ? listItems.length : 10).map((item, index) => (
+                                        {visibleCards.slice(0, isGalleryExpanded ? visibleCards.length : 10).map((card, visibleIndex) => {
+                                            const originalIndex = displayCards.findIndex(c => c === card);
+                                            return (
                                             <ListViewItem 
-                                                key={index}
-                                                title={item.title}
-                                                bodyCopy={item.bodyCopy}
-                                                imageStarred={item.imageStarred}
-                                                mediaType={item.mediaType}
-                                                index={index}
-                                            />
-                                        ))}
+                                                    key={originalIndex}
+                                                    title={card.title}
+                                                    bodyCopy={card.bodyCopy}
+                                                    imageStarred={card.imageStarred}
+                                                    mediaType={card.mediaType}
+                                                    index={visibleIndex}
+                                                />
+                                            );
+                                        })}
                                     </div>
                                     </div>
                                 </div>
@@ -665,6 +1044,38 @@ export default function CardComboModal() {
                 </div>
             </div>
             <div className="absolute border-4 border-white border-solid inset-0 pointer-events-none rounded-3xl shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.05),0px_8px_10px_-6px_rgba(0,0,0,0.05)]"/>
+            
+            {/* Ellipsis Dropdown Menu */}
+            {ellipsisMenu && (
+                <ContextMenu
+                    x={ellipsisMenu.x}
+                    y={ellipsisMenu.y}
+                    onClose={() => setEllipsisMenu(null)}
+                    items={[
+                        {
+                            label: 'Remove cover image',
+                            icon: Star,
+                            onClick: handleRemoveCoverImage
+                        },
+                        {
+                            label: 'Copy to..',
+                            icon: Copy,
+                            onClick: handleCopyTo
+                        },
+                        {
+                            label: 'Move to..',
+                            icon: FolderOpen,
+                            onClick: handleMoveTo
+                        },
+                        {
+                            label: 'Delete',
+                            icon: Trash2,
+                            onClick: handleDeleteCardFromMenu,
+                            variant: 'danger' as const
+                        }
+                    ]}
+                />
+            )}
         </div>
     );
 } 
