@@ -454,6 +454,7 @@ interface CardItemProps {
     imageUrl?: string;
     title?: string;
     itemCount?: number;
+    isCoverImage?: boolean;
 }
 
 function CardItem({ 
@@ -471,7 +472,8 @@ function CardItem({
     moreCount = 0,
     imageUrl,
     title = "Signs (Spells)",
-    itemCount = 12
+    itemCount = 12,
+    isCoverImage = false
 }: CardItemProps) {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
@@ -495,6 +497,38 @@ function CardItem({
         if (cardIndex !== undefined && onDelete) {
             onDelete(cardIndex);
         }
+    };
+
+    // Custom context menu items for cover image
+    const getContextMenuItems = () => {
+        if (isCoverImage) {
+            // For cover image, only show "Remove cover"
+            return [{
+                label: 'Remove cover',
+                icon: Star,
+                onClick: handleSetCover
+            }];
+        }
+        
+        // Default context menu for regular cards
+        return [
+            {
+                label: 'View',
+                icon: Eye,
+                onClick: handleView
+            },
+            ...(mediaType === 'image' ? [{
+                label: imageStarred === 'yes' ? 'Remove cover' : 'Set cover',
+                icon: Star,
+                onClick: handleSetCover
+            }] : []),
+            {
+                label: 'Delete',
+                icon: Trash2,
+                onClick: handleDelete,
+                variant: 'danger' as const
+            }
+        ];
     };
 
     const element = (
@@ -547,24 +581,7 @@ function CardItem({
                         x={contextMenu.x}
                         y={contextMenu.y}
                         onClose={() => setContextMenu(null)}
-                        items={[
-                            {
-                                label: 'View',
-                                icon: Eye,
-                                onClick: handleView
-                            },
-                            ...(mediaType === 'image' ? [{
-                                label: imageStarred === 'yes' ? 'Remove cover' : 'Set cover',
-                                icon: Star,
-                                onClick: handleSetCover
-                            }] : []),
-                            {
-                                label: 'Delete',
-                                icon: Trash2,
-                                onClick: handleDelete,
-                                variant: 'danger' as const
-                            }
-                        ]}
+                        items={getContextMenuItems()}
                     />
                 )}
             </>
@@ -671,19 +688,7 @@ function CardItem({
                     x={contextMenu.x}
                     y={contextMenu.y}
                     onClose={() => setContextMenu(null)}
-                    items={[
-                        {
-                            label: 'View',
-                            icon: Eye,
-                            onClick: handleView
-                        },
-                        {
-                            label: 'Delete',
-                            icon: Trash2,
-                            onClick: handleDelete,
-                            variant: 'danger' as const
-                        }
-                    ]}
+                    items={getContextMenuItems()}
                 />
             )}
             </>
@@ -750,24 +755,7 @@ function CardItem({
                 x={contextMenu.x}
                 y={contextMenu.y}
                 onClose={() => setContextMenu(null)}
-                items={[
-                    {
-                        label: 'View',
-                        icon: Eye,
-                        onClick: handleView
-                    },
-                    ...(mediaType === 'image' ? [{
-                        label: imageStarred === 'yes' ? 'Remove cover' : 'Set cover',
-                        icon: Star,
-                        onClick: handleSetCover
-                    }] : []),
-                    {
-                        label: 'Delete',
-                        icon: Trash2,
-                        onClick: handleDelete,
-                        variant: 'danger' as const
-                    }
-                ]}
+                items={getContextMenuItems()}
             />
         )}
         </>
@@ -1284,12 +1272,15 @@ export default function CardComboModal() {
                                     <CardItem 
                                         blank="no"
                                         images="many"
-                                        imageStarred="no"
+                                        imageStarred="yes"
                                         mediaType="image"
                                         bodyCopy="A diverse collection of mystical characters with unique abilities and wisdom."
                                         showAvatar={false}
                                         showStarIcon={false}
                                         imageUrl={coverImageUrl}
+                                        isCoverImage={true}
+                                        cardIndex={Array.from(starredCards)[0]}
+                                        onSetCover={handleSetCover}
                                     />
                                 </div>
                             )}
