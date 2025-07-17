@@ -1,7 +1,5 @@
 import { 
   ChevronRight, 
-  ChevronUp,
-  ChevronDown,
   File, 
   Star, 
   Paperclip, 
@@ -301,15 +299,7 @@ function AddToCampaignSimple({ active = false, onClick }: { active?: boolean; on
 // return null;
 // }
 
-function Separator() {
-    return (
-        <div className="box-border content-stretch flex flex-col items-start justify-start p-0 relative size-full" data-name="Vert. / Horz.=True">
-            <div className="h-0 relative shrink-0 w-full" data-name="Line">
-                <div className="absolute bottom-0 left-0 right-0 top-[-1px] bg-slate-200 h-px"></div>
-            </div>
-        </div>
-    );
-}
+
 
 // Context Menu Component
 interface MenuItem {
@@ -765,8 +755,6 @@ function CardItem({
 interface ListViewItemProps {
     title?: string;
     bodyCopy?: string;
-    imageStarred?: 'no' | 'yes';
-    mediaType?: 'collection' | 'card' | 'image';
     imageUrl?: string;
     index?: number;
 }
@@ -774,21 +762,9 @@ interface ListViewItemProps {
 function ListViewItem({ 
     title = "Heroes Collection",
     bodyCopy = "A diverse collection of mystical characters, each with unique abilities and wisdom. From graceful Witcher Elves to battle-hardened warriors, they navigate the mystical realms with ease.",
-    imageStarred = "no",
-    mediaType = "card",
     imageUrl = imgFrame184,
     index = 0
 }: ListViewItemProps) {
-    const getMediaTypeIcon = () => {
-        switch (mediaType) {
-            case 'image':
-                return <ImageIcon className="w-4 h-4 text-slate-500" strokeWidth={2} />;
-            case 'collection':
-                return <File className="w-4 h-4 text-slate-500" strokeWidth={2} />;
-            default:
-                return <FileText className="w-4 h-4 text-slate-500" strokeWidth={2} />;
-        }
-    };
 
     return (
         <div className={`${index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100'} border-b border-slate-100 transition-colors duration-200 cursor-pointer`}>
@@ -1608,7 +1584,6 @@ export default function CardComboModal() {
                                     <div>
                                         {visibleCards.slice(0, isGalleryExpanded ? visibleCards.length : 10).map((card, visibleIndex) => {
                                             const originalIndex = displayCards.findIndex(c => c === card);
-                                            const isStarred = starredCards.has(originalIndex);
                                             
                                             // Get demo character image for image cards
                                             const imageUrl = card.mediaType === 'image' ? getUniqueImageForCard(displayCards, originalIndex) || imgFrame184 : imgFrame184;
@@ -1621,8 +1596,6 @@ export default function CardComboModal() {
                                                     key={originalIndex}
                                                     title={title}
                                                     bodyCopy={card.bodyCopy}
-                                                    imageStarred={isStarred ? "yes" : "no"}
-                                                    mediaType={card.mediaType}
                                                     index={visibleIndex}
                                                     imageUrl={imageUrl}
                                                 />
