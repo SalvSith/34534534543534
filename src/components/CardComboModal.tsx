@@ -75,15 +75,16 @@ const getUniqueNameForCard = (cards: any[], cardIndex: number) => {
     return null; // Will fallback to original title
 };
 
-const imgFrame184 = "https://picsum.photos/290/363?random=1";
-const imgAvatar = "https://picsum.photos/32/32?random=2";
+// Use demo character images as fallbacks
+const imgFrame184 = "/Demo Characters/1.png";
+const imgAvatar = "/Demo Characters/10.png";
 
-// Assets from Figma design for hover tooltip - exact variable names from Figma
-const imgImage = "http://localhost:3845/assets/9d6dcfc1fb8cd40116ca161e463af1ee400a729e.png";
-const imgImage1 = "http://localhost:3845/assets/6f081d00eeabb5809fcfb633f13f1a4e2f2f0ac9.png";
-const imgFrame187 = "http://localhost:3845/assets/c04ea38bdfac0fc122878ebddc6b5db3806ff2e7.png";
-const imgFrame185 = "http://localhost:3845/assets/35deda4ec38b232bcb6f601a8269e7017ba84a09.png";
-const imgFrame186 = "http://localhost:3845/assets/fa84f6c3eada06d932b2bd74c8ff8e35375bc615.png";
+// Assets from Figma design for hover tooltip - using demo character images as fallbacks
+const imgImage = "/Demo Characters/9.png";
+const imgImage1 = "/Demo Characters/2.png";
+const imgFrame187 = "/Demo Characters/3.png";
+const imgFrame185 = "/Demo Characters/4.png";
+const imgFrame186 = "/Demo Characters/5.png";
 // const imgHexagon = "http://localhost:3845/assets/d090f3ed711491b6d26d07800ce108242a362927.svg";
 // const imgPlus = "http://localhost:3845/assets/7bac326c57b9f7353e78a7b7bf2380cc8cac46cb.svg";
 
