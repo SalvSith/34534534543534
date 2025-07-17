@@ -21,6 +21,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 // Asset URLs for character images - using placeholder for now but keeping original structure
 const imgFrame184 = "https://picsum.photos/290/363?random=1";
@@ -286,16 +287,23 @@ function ContextMenu({ x, y, onClose, items, excludeRefs = [] }: ContextMenuProp
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
+        // Delay adding the click-outside listener to avoid catching the initial right-click
+        const timeoutId = setTimeout(() => {
+            document.addEventListener('mousedown', handleClickOutside);
+        }, 10);
+        
         document.addEventListener('keydown', handleEscape);
         
         return () => {
+            clearTimeout(timeoutId);
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleEscape);
         };
     }, [onClose, excludeRefs]);
 
-    // Adjust position if menu would go off screen
+    // Calculate position that stays within viewport
+    const [position, setPosition] = useState({ x, y });
+    
     useEffect(() => {
         if (menuRef.current) {
             const rect = menuRef.current.getBoundingClientRect();
@@ -305,24 +313,28 @@ function ContextMenu({ x, y, onClose, items, excludeRefs = [] }: ContextMenuProp
             let adjustedX = x;
             let adjustedY = y;
             
+            // Adjust if menu would go off right edge
             if (x + rect.width > viewportWidth) {
                 adjustedX = viewportWidth - rect.width - 8;
             }
             
+            // Adjust if menu would go off bottom edge
             if (y + rect.height > viewportHeight) {
                 adjustedY = viewportHeight - rect.height - 8;
             }
             
-            menuRef.current.style.left = `${adjustedX}px`;
-            menuRef.current.style.top = `${adjustedY}px`;
+            // Only update if position actually changed
+            if (adjustedX !== position.x || adjustedY !== position.y) {
+                setPosition({ x: adjustedX, y: adjustedY });
+            }
         }
-    }, [x, y]);
+    }, [x, y, position.x, position.y]);
 
-    return (
+    const menuElement = (
         <div
             ref={menuRef}
             className="fixed z-50 bg-white rounded-xl min-w-32 border border-slate-200 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)]"
-            style={{ left: x, top: y }}
+            style={{ left: `${position.x}px`, top: `${position.y}px` }}
             data-name="Context Menu"
         >
             <div className="flex flex-col p-1">
@@ -353,6 +365,9 @@ function ContextMenu({ x, y, onClose, items, excludeRefs = [] }: ContextMenuProp
             </div>
         </div>
     );
+
+    // Render the context menu at document.body level to avoid positioning issues
+    return createPortal(menuElement, document.body);
 }
 
 interface CardItemProps {
@@ -729,6 +744,12 @@ export default function CardComboModal() {
     const ellipsisButtonRef = useRef<HTMLDivElement>(null);
     const cardsContainerRef = useRef<HTMLDivElement>(null);
 
+    // Drag functionality state
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStartY, setDragStartY] = useState(0);
+    const [dragOffset, setDragOffset] = useState(0);
+    const dragHandleRef = useRef<HTMLDivElement>(null);
+
     // Check if device is mobile (screen width < 1024px which is the lg breakpoint)
     const [isMobile, setIsMobile] = useState(false);
 
@@ -741,6 +762,98 @@ export default function CardComboModal() {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // Drag event handlers
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        // Only handle left mouse button or touch events, ignore right clicks
+        if ('button' in e && e.button !== 0) return;
+        
+        // Ensure this event is specifically from the drag handle
+        if (!dragHandleRef.current?.contains(e.target as Node)) return;
+        
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        setIsDragging(true);
+        setDragStartY(clientY);
+        setDragOffset(0);
+        
+        // Prevent text selection during drag, but only prevent default for the drag handle
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Only set user-select none during actual dragging
+        document.body.style.userSelect = 'none';
+    };
+
+    const handleDragMove = (e: MouseEvent | TouchEvent) => {
+        if (!isDragging) return;
+        
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        const deltaY = dragStartY - clientY; // Positive when dragging up
+        const dragThreshold = 60; // Minimum drag distance to trigger expand
+        
+        // Update drag offset for smooth visual feedback
+        setDragOffset(Math.max(-50, Math.min(50, deltaY)));
+        
+        // Auto-expand when dragging up significantly
+        if (deltaY > dragThreshold && !isGalleryExpanded) {
+            setIsGalleryExpanded(true);
+            setIsDragging(false);
+            setDragOffset(0);
+            document.body.style.userSelect = '';
+        }
+        // Auto-collapse when dragging down significantly
+        else if (deltaY < -dragThreshold && isGalleryExpanded) {
+            setIsGalleryExpanded(false);
+            setIsDragging(false);
+            setDragOffset(0);
+            document.body.style.userSelect = '';
+        }
+    };
+
+    const handleDragEnd = () => {
+        setIsDragging(false);
+        setDragOffset(0);
+        document.body.style.userSelect = '';
+    };
+
+    // Cleanup on unmount to ensure userSelect is restored
+    useEffect(() => {
+        return () => {
+            document.body.style.userSelect = '';
+        };
+    }, []);
+
+    // Add global mouse/touch move and end listeners when dragging
+    useEffect(() => {
+        if (isDragging) {
+            const handleMouseMove = (e: MouseEvent) => {
+                handleDragMove(e);
+            };
+            const handleTouchMove = (e: TouchEvent) => {
+                handleDragMove(e);
+            };
+            const handleMouseUp = (e: MouseEvent) => {
+                // Only end drag on left mouse button release
+                if (e.button === 0) {
+                    handleDragEnd();
+                }
+            };
+            const handleTouchEnd = () => handleDragEnd();
+
+            // Use normal phase, not capture, to avoid interfering with other components
+            document.addEventListener('mousemove', handleMouseMove, { passive: true });
+            document.addEventListener('touchmove', handleTouchMove, { passive: true });
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('touchend', handleTouchEnd);
+
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('touchmove', handleTouchMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+                document.removeEventListener('touchend', handleTouchEnd);
+            };
+        }
+    }, [isDragging, dragStartY]);
 
     // Mobile scroll detection for auto-expansion and collapse
     useEffect(() => {
@@ -1033,7 +1146,32 @@ export default function CardComboModal() {
 
                 {/* Tabs and Cards Section - Only show if there are cards */}
                 {visibleCards.length > 0 && (
-                <div className={`bg-slate-100 box-border content-stretch flex flex-col items-start justify-start pb-0 pt-0 px-0 relative w-full overflow-hidden transition-all duration-500 ease-out ${isGalleryExpanded ? 'flex-1' : 'flex-1'}`}>
+                <div className={`bg-slate-100 box-border content-stretch flex flex-col items-start justify-start pb-0 pt-0 px-0 relative w-full overflow-hidden transition-all duration-500 ease-out ${isGalleryExpanded ? 'flex-1' : 'flex-1'}`}
+                     style={{
+                         transform: isDragging ? `translateY(${-dragOffset}px)` : 'translateY(0px)',
+                         transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+                     }}>
+                    {/* Drag Handle */}
+                    <div 
+                        ref={dragHandleRef}
+                        className={`group relative w-full py-3 select-none transition-all duration-200 ${
+                            isDragging 
+                                ? 'cursor-grabbing bg-slate-200' 
+                                : 'cursor-grab bg-slate-100 hover:bg-slate-200'
+                        }`}
+                        onMouseDown={handleDragStart}
+                        onTouchStart={handleDragStart}
+                    >
+                        <div className="flex items-center justify-center">
+                            <div className={`h-1 rounded-full transition-all duration-200 ${
+                                isDragging 
+                                    ? 'w-16 bg-slate-400' 
+                                    : 'w-12 bg-slate-300 hover:bg-slate-400'
+                            }`}></div>
+                        </div>
+
+                    </div>
+
                     {/* Tabs Header */}
                     <div className={`bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full border-b border-slate-200 overflow-hidden transition-all duration-500 ease-out ${showFilters || isGalleryExpanded ? 'opacity-100 max-h-[120px] min-h-[58px] py-3 lg:py-0' : 'opacity-0 max-h-0 py-0'}`}>
                         <div className="box-border content-stretch flex flex-row items-start justify-start p-0 relative shrink-0 overflow-x-auto w-full lg:w-auto lg:self-end">
