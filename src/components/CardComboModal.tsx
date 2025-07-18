@@ -274,7 +274,7 @@ function LucideIconsChevronRight() {
     );
 }
 
-function AddToCampaignSimple({ active = false, onClick }: { active?: boolean; onClick?: () => void }) {
+function AddToCampaignSimple({ active = false, onClick }: { active?: boolean; onClick?: (e?: React.MouseEvent) => void }) {
     return (
         <button 
             className="relative size-full cursor-pointer hover:opacity-80" 
@@ -815,6 +815,8 @@ export default function CardComboModal() {
     const [hoverStyle, setHoverStyle] = useState({ width: 0, left: 0 });
     const [isInitialFilterPosition, setIsInitialFilterPosition] = useState(true);
 
+
+
     // Drag functionality state
     const [isDragging, setIsDragging] = useState(false);
     const [dragStartY, setDragStartY] = useState(0);
@@ -834,6 +836,8 @@ export default function CardComboModal() {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+        
 
     // Update indicator position when active filter changes or filters open
     useEffect(() => {
@@ -1022,24 +1026,46 @@ export default function CardComboModal() {
         }
     }, [isDragging, dragStartY]);
 
-    // Mobile scroll detection for auto-expansion and collapse
+    // Scroll detection for auto-expansion and collapse (both mobile and desktop)
     useEffect(() => {
-        if (!isMobile || !cardsContainerRef.current) return;
+        if (!cardsContainerRef.current) return;
 
-        let scrollThreshold = 50; // Minimum scroll distance before triggering expansion
-        let collapseThreshold = 10; // Maximum scroll distance before triggering collapse
+        let scrollThreshold = isMobile ? 50 : 30; // Minimum scroll distance before triggering expansion
+        let collapseThreshold = 25; // Must scroll closer to top to prime for collapse
+        let scrollTimeout: number | null = null;
+        let hasReachedTop = false; // Track if user has already reached the top once
 
         const handleScroll = (e: Event) => {
             const target = e.target as HTMLElement;
             
-            // Expand when scrolling down past threshold
-            if (!isGalleryExpanded && target.scrollTop > scrollThreshold) {
-                setIsGalleryExpanded(true);
+            // Clear existing timeout to debounce rapid scroll events
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
             }
-            // Collapse when scrolling back to the top
-            else if (isGalleryExpanded && target.scrollTop <= collapseThreshold) {
-                setIsGalleryExpanded(false);
-            }
+            
+            // Use requestAnimationFrame for smooth animation timing
+            scrollTimeout = requestAnimationFrame(() => {
+                // Expand when scrolling down past threshold (immediate)
+                if (!isGalleryExpanded && target.scrollTop > scrollThreshold) {
+                    setIsGalleryExpanded(true);
+                }
+                // Handle collapse logic (requires double-scroll to top)
+                else if (isGalleryExpanded) {
+                    if (target.scrollTop <= collapseThreshold) {
+                        if (hasReachedTop) {
+                            // User has reached top for the second time - collapse
+                            setIsGalleryExpanded(false);
+                            hasReachedTop = false; // Reset for next time
+                        } else {
+                            // First time reaching top - just mark it
+                            hasReachedTop = true;
+                        }
+                    } else {
+                        // User scrolled away from top - reset the flag
+                        hasReachedTop = false;
+                    }
+                }
+            }) as any;
         };
 
         const container = cardsContainerRef.current;
@@ -1047,6 +1073,9 @@ export default function CardComboModal() {
         
         return () => {
             container.removeEventListener('scroll', handleScroll);
+            if (scrollTimeout) {
+                cancelAnimationFrame(scrollTimeout);
+            }
         };
     }, [isMobile, isGalleryExpanded]);
 
@@ -1152,21 +1181,28 @@ export default function CardComboModal() {
     const coverImageUrl = getCoverImageUrl();
 
     return (
-        <div className={`bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto transition-all duration-300 ease-out ${visibleCards.length > 0 ? 'h-[80vh] max-h-[900px]' : 'h-auto min-h-[300px]'}`} style={{ width: 'min(100vw - 2rem, 1024px)' }}>
+        <div className={`bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto transition-all duration-300 ease-out ${visibleCards.length > 0 ? 'h-[80vh] max-h-[900px]' : 'h-auto min-h-[300px]'}`} style={{ width: 'min(100vw - 2rem, 1024px)' }} data-modal-container>
             <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative w-full min-w-0 h-full transition-all duration-500 ease-out">
                 {/* Header - Always visible */}
-                <div className="box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative w-full shrink-0">
+                <div 
+                    className={`box-border content-stretch flex flex-row gap-2 items-start justify-start p-0 relative w-full shrink-0 ${isGalleryExpanded ? 'cursor-pointer' : ''}`}
+                    onClick={isGalleryExpanded ? () => setIsGalleryExpanded(false) : undefined}
+                >
                     <div className="basis-0 grow min-h-px min-w-px relative shrink-0">
                         <div className="relative size-full">
                             <div className={`box-border content-stretch flex flex-row gap-3 items-center justify-start relative w-full transition-all duration-500 ease-out ${isGalleryExpanded ? 'pt-6 pb-3 pl-6 pr-0' : 'py-6 pl-6 pr-0'}`}>
-                                {/* Cover Image Preview - Only show when expanded and cover exists */}
+                                {/* Header Cover Image - Always show on mobile, only when expanded on desktop */}
                                 {coverImageUrl && (
                                     <div 
-                                        className={`bg-white relative rounded-xl shrink-0 overflow-hidden transition-all duration-500 ease-out ${
+                                        className={`bg-white relative rounded-xl shrink-0 overflow-hidden transition-all duration-700 ease-in-out ${
                                             isGalleryExpanded 
-                                                ? 'size-16 opacity-100 scale-100' 
-                                                : 'size-0 opacity-0 scale-75'
+                                                ? 'size-16 opacity-100 scale-100 shadow-sm' 
+                                                : 'size-16 opacity-100 scale-100 lg:size-0 lg:opacity-0 lg:scale-90'
                                         }`}
+                                        style={{
+                                            transitionProperty: 'all',
+                                            transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
+                                        }}
                                     >
                                         <div className="box-border content-stretch flex flex-col items-start justify-start p-0 relative w-full h-full">
                                             <div 
@@ -1182,7 +1218,10 @@ export default function CardComboModal() {
                                 <div className="basis-0 box-border content-stretch flex flex-col gap-2 grow items-start justify-start min-h-px min-w-px px-0 py-1.5 relative shrink-0">
                                     {/* Breadcrumb */}
                                     <div className="flex flex-wrap gap-2 items-center justify-start p-0 relative shrink-0">
-                                        <div className="box-border content-stretch flex flex-row items-center justify-center p-0 relative shrink-0 cursor-pointer hover:text-slate-700 transition-colors duration-200">
+                                        <div 
+                                            className="box-border content-stretch flex flex-row items-center justify-center p-0 relative shrink-0 cursor-pointer hover:text-slate-700 transition-colors duration-200"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <div className="font-hvd-regular leading-[20px] not-italic relative shrink-0 text-[14px] text-left text-slate-500 hover:text-inherit">
                                                 <p className="leading-[20px]">Library</p>
                                             </div>
@@ -1190,7 +1229,10 @@ export default function CardComboModal() {
                                         <div className="flex items-center justify-center relative shrink-0 size-4">
                                             <LucideIconsChevronRight />
                                         </div>
-                                        <div className="box-border content-stretch flex flex-row items-center justify-center p-0 relative shrink-0">
+                                        <div 
+                                            className="box-border content-stretch flex flex-row items-center justify-center p-0 relative shrink-0"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <div className="font-hvd-regular leading-[20px] not-italic relative shrink-0 text-[14px] text-left text-slate-950">
                                                 <p className="block leading-[20px]">Heroes</p>
                                             </div>
@@ -1209,12 +1251,18 @@ export default function CardComboModal() {
                         <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10">
                             <AddToCampaignSimple 
                                 active={campaignActive}
-                                onClick={() => setCampaignActive(!campaignActive)}
+                                onClick={(e) => {
+                                    e?.stopPropagation();
+                                    setCampaignActive(!campaignActive);
+                                }}
                             />
                         </div>
                         <div 
                             ref={ellipsisButtonRef}
-                            onClick={handleEllipsisClick}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleEllipsisClick(e);
+                            }}
                             className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10 cursor-pointer hover:bg-slate-200 rounded-lg transition-colors duration-200 p-1"
                         >
                             <img 
@@ -1223,7 +1271,10 @@ export default function CardComboModal() {
                                 className="w-full h-full object-contain"
                             />
                         </div>
-                        <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10 cursor-pointer hover:bg-slate-200 rounded-lg transition-colors duration-200 p-1">
+                        <div 
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10 cursor-pointer hover:bg-slate-200 rounded-lg transition-colors duration-200 p-1"
+                        >
                             <img 
                                 src="/Icon Button-1.svg" 
                                 alt="Close" 
@@ -1236,15 +1287,20 @@ export default function CardComboModal() {
                 {/* Content - Animate when gallery is expanded */}
                 <div className={`relative w-full transition-all duration-500 ease-out ${isGalleryExpanded ? 'opacity-0 max-h-0 transform -translate-y-8 overflow-hidden' : 'opacity-100 max-h-[500px] transform translate-y-0'}`}>
                     <div className="relative size-full">
-                        <div className={`box-border content-stretch flex items-start justify-start pb-3 pt-0 px-3 sm:px-6 relative w-full transition-all duration-500 ease-out ${coverImageUrl && !isGalleryExpanded ? 'flex-row gap-8' : 'flex-col gap-4 max-w-[768px]'}`}>
-                            {/* Cover Image Card - Animate to/from header position */}
+                        <div className={`box-border content-stretch flex items-start justify-start pb-3 pt-0 px-3 sm:px-6 relative w-full transition-all duration-500 ease-out flex-col gap-4 max-w-[768px] ${coverImageUrl && !isGalleryExpanded ? 'lg:flex-row lg:gap-8 lg:max-w-none' : ''}`}>
+                            {/* Text Area Cover Image - Hidden on mobile, scales when expanded on desktop */}
                             {coverImageUrl && (
                                 <div 
-                                    className={`bg-white relative rounded-3xl shrink-0 transition-all duration-500 ease-out ${
+                                    className={`bg-white relative rounded-3xl shrink-0 transition-all duration-700 ease-in-out hidden lg:block ${
                                         isGalleryExpanded 
-                                            ? 'w-0 h-0 opacity-0 scale-75 overflow-hidden' 
-                                            : 'w-60 h-[300px] opacity-100 scale-100'
+                                            ? 'w-0 h-0 opacity-0 scale-90 overflow-hidden' 
+                                            : 'w-60 h-[300px] opacity-100 scale-100 shadow-sm'
                                     }`}
+                                    style={{
+                                        transitionProperty: 'all',
+                                        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                                        transformOrigin: 'top left'
+                                    }}
                                 >
                                     <CardItem 
                                         blank="no"
@@ -1263,7 +1319,7 @@ export default function CardComboModal() {
                             )}
                             
                             {/* Text Content */}
-                            <div className={`basis-0 box-border content-stretch flex flex-col gap-4 items-start justify-start p-0 relative shrink-0 transition-all duration-500 ease-out ${coverImageUrl && !isGalleryExpanded ? 'grow min-h-px min-w-px self-stretch' : 'w-full'}`}>
+                            <div className={`basis-0 box-border content-stretch flex flex-col gap-4 items-start justify-start p-0 relative shrink-0 transition-all duration-500 ease-out w-full ${coverImageUrl && !isGalleryExpanded ? 'lg:grow lg:min-h-px lg:min-w-px lg:self-stretch' : ''}`}>
                                 <div className="font-hvd-regular leading-[24px] w-full not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                     <p className="block leading-[24px]">{`A diverse group of mystical characters, each with their own unique abilities and wisdom. From graceful Witcher Elves to battle-hardened warriors, they navigate the mystical realms with ease.`}</p>
                                     <br/>
@@ -1279,7 +1335,7 @@ export default function CardComboModal() {
                                         title="Gerald's Silver Sword" 
                                         description="A legendary silver sword forged for combating undead creatures and supernatural beings. This enchanted blade glows with a soft silver light when monsters are near, and its edge never dulls. Crafted by the finest elven smiths of Rivendell, it has been passed down through generations of monster hunters."
                                         itemCount={8}
-                                        disabled={isDragging}
+                                        disabled={isDragging || isGalleryExpanded}
                                     >
                                     <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
                                         <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
@@ -1296,7 +1352,7 @@ export default function CardComboModal() {
                                         title="Gerald's Steel Sword" 
                                         description="For natural foes and human opponents, this steel blade has seen many battles. Its perfectly balanced design and razor-sharp edge make it deadly in combat against mortal enemies. The crossguard bears ancient runes that glow faintly in battle, and the leather-wrapped hilt provides perfect grip even in the heat of combat. This weapon has saved Gerald's life countless times in his adventures across the mystical realms."
                                         itemCount={12}
-                                        disabled={isDragging}
+                                        disabled={isDragging || isGalleryExpanded}
                                     >
                                     <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
                                         <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
@@ -1319,7 +1375,7 @@ export default function CardComboModal() {
                                         title="Roach - Faithful" 
                                         description="Gerald's trusted horse, loyal and brave, has been with him through countless adventures across the mystical realms. This intelligent mare has an uncanny ability to find her way through any terrain and responds to Gerald's whistle from great distances. Her chestnut coat gleams in the sunlight, and her eyes show the wisdom of many journeys."
                                         itemCount={6}
-                                        disabled={isDragging}
+                                        disabled={isDragging || isGalleryExpanded}
                                     >
                                     <div className="bg-slate-100 hover:bg-slate-200 box-border content-stretch flex flex-row gap-1 items-center justify-start px-1.5 py-1 relative rounded-md shrink-0 cursor-pointer transition-colors duration-200">
                                         <div className="absolute border-2 border-white border-solid inset-0 pointer-events-none rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"/>
@@ -1536,7 +1592,7 @@ export default function CardComboModal() {
                         <div className="relative size-full min-w-0">
                             {viewMode === 'card' ? (
                                 /* Card Grid View */
-                                <div className={`box-border content-stretch grid gap-4 items-start justify-start relative w-full min-w-0 transition-all duration-300 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t-0 ${isGalleryExpanded ? 'pb-4 pt-4 px-3 sm:px-4' : 'pb-6 pt-6 px-3 sm:px-6'}`}>
+                                <div className={`box-border content-stretch grid gap-4 items-start justify-start relative w-full min-w-0 transition-all duration-300 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t-0 ${isGalleryExpanded ? 'pb-4 pt-16 px-3 sm:px-4' : 'pb-6 pt-6 px-3 sm:px-6'}`}>
                                     {visibleCards.map((card, _) => {
                                         // Find the original index in displayCards for proper card deletion tracking
                                         const originalIndex = displayCards.findIndex(c => c === card);
@@ -1568,7 +1624,7 @@ export default function CardComboModal() {
                                 </div>
                             ) : (
                                 /* List View */
-                                <div className={`relative w-full ${isGalleryExpanded ? 'pb-4 pt-4 px-3 sm:px-4' : 'pb-6 pt-6 px-3 sm:px-6'}`}>
+                                <div className={`relative w-full ${isGalleryExpanded ? 'pb-4 pt-16 px-3 sm:px-4' : 'pb-6 pt-6 px-3 sm:px-6'}`}>
                                     <div className="bg-white rounded-lg overflow-hidden border border-slate-200">
                                     {/* List Header */}
                                     <div className="bg-slate-50 border-b border-slate-200 px-4 py-3">
@@ -1612,6 +1668,8 @@ export default function CardComboModal() {
                 </div>
                 )}
             </div>
+            
+
             <div className="absolute border-4 border-white border-solid inset-0 pointer-events-none rounded-3xl shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.05),0px_8px_10px_-6px_rgba(0,0,0,0.05)]"/>
             
             {/* Ellipsis Dropdown Menu */}
