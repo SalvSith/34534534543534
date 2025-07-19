@@ -1289,8 +1289,8 @@ export default function CardComboModal() {
                                         </div>
                                     </div>
                                     {/* Title */}
-                                    <div className="font-hvd-medium leading-none not-italic relative shrink-0 text-[24px] sm:text-[28px] lg:text-[24px] text-left text-slate-950 tracking-[-0.6px] w-full">
-                                        <p className="block leading-none">Azalea Characters</p>
+                                    <div className="font-hvd-medium leading-none not-italic relative shrink-0 text-[20px] sm:text-[24px] md:text-[28px] lg:text-[24px] text-left text-slate-950 tracking-[-0.3px] sm:tracking-[-0.6px] w-full">
+                                        <p className="block leading-none whitespace-nowrap overflow-hidden text-ellipsis">Azalea Characters</p>
                                     </div>
                                 </div>
                             </div>
@@ -1371,7 +1371,7 @@ export default function CardComboModal() {
                             )}
                             
                             {/* Text Content */}
-                            <div className={`basis-0 box-border content-stretch flex flex-col gap-4 items-start justify-start p-0 relative shrink-0 transition-all duration-500 ease-out w-full ${coverImageUrl && !isGalleryExpanded ? 'lg:grow lg:min-h-px lg:min-w-px lg:self-stretch' : ''}`}>
+                            <div className={`flex flex-col gap-4 items-start justify-start p-0 relative transition-all duration-500 ease-out w-full min-h-[100px] max-h-[200px] md:max-h-none md:min-h-0 overflow-y-auto md:overflow-y-visible md:basis-0 md:shrink-0 ${coverImageUrl && !isGalleryExpanded ? 'lg:grow lg:min-h-px lg:min-w-px lg:self-stretch' : ''}`}>
                                 <div className="font-hvd-regular leading-[24px] w-full not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                     <p className="block leading-[24px]">{`A diverse group of mystical characters, each with their own unique abilities and wisdom. From graceful Witcher Elves to battle-hardened warriors, they navigate the mystical realms with ease.`}</p>
                                     <br/>
