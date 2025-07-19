@@ -446,6 +446,7 @@ interface CardItemProps {
     title?: string;
     itemCount?: number;
     isCoverImage?: boolean;
+    isSingleImageCard?: boolean;
 }
 
 function CardItem({ 
@@ -464,7 +465,8 @@ function CardItem({
     imageUrl,
     title = "Signs (Spells)",
     itemCount = 12,
-    isCoverImage = false
+    isCoverImage = false,
+    isSingleImageCard = false
 }: CardItemProps) {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
@@ -493,12 +495,21 @@ function CardItem({
     // Custom context menu items for cover image
     const getContextMenuItems = () => {
         if (isCoverImage) {
-            // For cover image, only show "Remove cover"
-            return [{
-                label: 'Remove cover',
-                icon: Star,
-                onClick: handleSetCover
-            }];
+            // If this is a single image card, show "Delete" instead of "Remove cover"
+            if (isSingleImageCard) {
+                return [{
+                    label: 'Delete',
+                    icon: Trash2,
+                    onClick: handleDelete,
+                    variant: 'danger' as const
+                }];
+            } else {
+                return [{
+                    label: 'Remove cover',
+                    icon: Star,
+                    onClick: handleSetCover
+                }];
+            }
         }
         
         // Default context menu for regular cards
@@ -926,6 +937,9 @@ export default function CardComboModal() {
 
     // Drag event handlers
     const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        // Don't allow dragging if there's no content to display
+        if (!shouldShowContentArea) return;
+        
         // Only handle left mouse button or touch events, ignore right clicks
         if ('button' in e && e.button !== 0) return;
         
@@ -1026,62 +1040,30 @@ export default function CardComboModal() {
         }
     }, [isDragging, dragStartY]);
 
-    // Scroll detection for auto-expansion and collapse (both mobile and desktop)
-    useEffect(() => {
-        if (!cardsContainerRef.current) return;
 
-        let scrollThreshold = isMobile ? 50 : 30; // Minimum scroll distance before triggering expansion
-        let collapseThreshold = 25; // Must scroll closer to top to prime for collapse
-        let scrollTimeout: number | null = null;
-        let hasReachedTop = false; // Track if user has already reached the top once
-
-        const handleScroll = (e: Event) => {
-            const target = e.target as HTMLElement;
-            
-            // Clear existing timeout to debounce rapid scroll events
-            if (scrollTimeout) {
-                clearTimeout(scrollTimeout);
-            }
-            
-            // Use requestAnimationFrame for smooth animation timing
-            scrollTimeout = requestAnimationFrame(() => {
-                // Expand when scrolling down past threshold (immediate)
-                if (!isGalleryExpanded && target.scrollTop > scrollThreshold) {
-                    setIsGalleryExpanded(true);
-                }
-                // Handle collapse logic (requires double-scroll to top)
-                else if (isGalleryExpanded) {
-                    if (target.scrollTop <= collapseThreshold) {
-                        if (hasReachedTop) {
-                            // User has reached top for the second time - collapse
-                            setIsGalleryExpanded(false);
-                            hasReachedTop = false; // Reset for next time
-                        } else {
-                            // First time reaching top - just mark it
-                            hasReachedTop = true;
-                        }
-                    } else {
-                        // User scrolled away from top - reset the flag
-                        hasReachedTop = false;
-                    }
-                }
-            }) as any;
-        };
-
-        const container = cardsContainerRef.current;
-        container.addEventListener('scroll', handleScroll, { passive: true });
-        
-        return () => {
-            container.removeEventListener('scroll', handleScroll);
-            if (scrollTimeout) {
-                cancelAnimationFrame(scrollTimeout);
-            }
-        };
-    }, [isMobile, isGalleryExpanded]);
 
     // Handler for deleting cards
     const handleDeleteCard = (cardIndex: number) => {
         setHiddenCards(prev => new Set([...prev, cardIndex]));
+        // Also remove from starred cards if it was the cover photo
+        setStarredCards(prev => {
+            const newStarred = new Set(prev);
+            newStarred.delete(cardIndex);
+            return newStarred;
+        });
+    };
+
+    // Handler for restoring cards one by one via ATTACH button
+    const handleAttachCard = () => {
+        if (hiddenCards.size > 0) {
+            // Get the first hidden card and restore it
+            const firstHiddenCard = Array.from(hiddenCards)[0];
+            setHiddenCards(prev => {
+                const newHidden = new Set(prev);
+                newHidden.delete(firstHiddenCard);
+                return newHidden;
+            });
+        }
     };
 
     // Handler for setting cover/starring cards - only one cover allowed at a time
@@ -1161,6 +1143,28 @@ export default function CardComboModal() {
     const displayCards = isGalleryExpanded ? [...allCards, ...expandedCards] : allCards;
     const visibleCards = displayCards.filter((_, index) => !hiddenCards.has(index));
 
+    // Auto-close tray when all cards are deleted
+    useEffect(() => {
+        if (visibleCards.length === 0 && isGalleryExpanded) {
+            setIsGalleryExpanded(false);
+        }
+    }, [visibleCards.length, isGalleryExpanded]);
+
+    // Auto-set single image card as cover
+    useEffect(() => {
+        if (visibleCards.length === 1) {
+            const singleCard = visibleCards[0];
+            const originalIndex = displayCards.findIndex(c => c === singleCard);
+            
+            // If it's an image card, automatically set it as cover
+            if (singleCard.mediaType === 'image' && originalIndex !== -1) {
+                setStarredCards(new Set([originalIndex]));
+            }
+        }
+    }, [visibleCards, displayCards]);
+
+
+
     // Get the cover image URL from the starred card
     const getCoverImageUrl = () => {
         if (starredCards.size === 0) return null;
@@ -1180,8 +1184,54 @@ export default function CardComboModal() {
 
     const coverImageUrl = getCoverImageUrl();
 
+    // Determine if content area should be shown
+    // Hide when: no content OR when there's only 1 image card that's set as cover
+    const shouldShowContentArea = visibleCards.length > 0 && !(
+        visibleCards.length === 1 && 
+        visibleCards[0].mediaType === 'image' && 
+        starredCards.size > 0
+    );
+
+    // Scroll detection for auto-expansion only (both mobile and desktop)
+    useEffect(() => {
+        if (!cardsContainerRef.current || !shouldShowContentArea) return;
+
+        let scrollThreshold = isMobile ? 50 : 30; // Minimum scroll distance before triggering expansion
+        let scrollTimeout: number | null = null;
+
+        const handleScroll = (e: Event) => {
+            const target = e.target as HTMLElement;
+            
+            // Only handle expansion - no collapse logic
+            if (isGalleryExpanded) return;
+            
+            // Clear existing timeout to debounce rapid scroll events
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            
+            // Use requestAnimationFrame for smooth animation timing
+            scrollTimeout = requestAnimationFrame(() => {
+                // Expand when scrolling down past threshold (immediate)
+                if (!isGalleryExpanded && target.scrollTop > scrollThreshold) {
+                    setIsGalleryExpanded(true);
+                }
+            }) as any;
+        };
+
+        const container = cardsContainerRef.current;
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            if (scrollTimeout) {
+                cancelAnimationFrame(scrollTimeout);
+            }
+        };
+    }, [isMobile, isGalleryExpanded, shouldShowContentArea]);
+
     return (
-        <div className={`bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto transition-all duration-300 ease-out ${visibleCards.length > 0 ? 'h-[80vh] max-h-[900px]' : 'h-auto min-h-[300px]'}`} style={{ width: 'min(100vw - 2rem, 1024px)' }} data-modal-container>
+        <div className={`bg-slate-50 relative rounded-3xl w-full max-w-[1024px] min-w-0 mx-auto transition-all duration-300 ease-out ${shouldShowContentArea ? 'h-[80vh] max-h-[900px]' : 'h-auto min-h-[300px]'}`} style={{ width: 'min(100vw - 2rem, 1024px)' }} data-modal-container>
             <div className="box-border content-stretch flex flex-col items-start justify-start overflow-hidden p-0 relative w-full min-w-0 h-full transition-all duration-500 ease-out">
                 {/* Header - Always visible */}
                 <div 
@@ -1312,8 +1362,10 @@ export default function CardComboModal() {
                                         showStarIcon={false}
                                         imageUrl={coverImageUrl}
                                         isCoverImage={true}
+                                        isSingleImageCard={!shouldShowContentArea}
                                         cardIndex={Array.from(starredCards)[0]}
                                         onSetCover={handleSetCover}
+                                        onDelete={handleDeleteCard}
                                     />
                                 </div>
                             )}
@@ -1410,179 +1462,186 @@ export default function CardComboModal() {
                         </div>
                     </div>
 
-                {/* Drag Handle and Tray Container - Move together */}
-                {visibleCards.length > 0 && (
-                <div className={`relative w-full transition-all duration-500 ease-out ${isGalleryExpanded ? 'flex-1 min-h-0' : ''}`}
+                {/* Tray Container - Always show filters, conditionally show drag handle and content */}
+                <div className={`relative w-full transition-all duration-500 ease-out ${isGalleryExpanded && shouldShowContentArea ? 'flex-1 min-h-0' : ''}`}
                      style={{
-                         transform: isDragging ? `translateY(${-dragOffset}px)` : 'translateY(0px)',
+                         transform: isDragging && shouldShowContentArea ? `translateY(${-dragOffset}px)` : 'translateY(0px)',
                          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
                      }}>
-                    {/* Drag Handle - Above the tray */}
-                    <div 
-                        ref={dragHandleRef}
-                        className={`group relative w-full select-none transition-all duration-200 z-10 ${
-                            isDragging 
-                                ? 'cursor-grabbing' 
-                                : 'cursor-grab'
-                        } ${isGalleryExpanded ? 'py-2' : 'py-3'}`}
-                        onMouseDown={handleDragStart}
-                        onTouchStart={handleDragStart}
-                    >
-                        <div className="flex items-center justify-center">
-                            <div className={`h-1 rounded-full transition-all duration-200 ${
+                    {/* Drag Handle - Only show when there's content to display */}
+                    {shouldShowContentArea && (
+                        <div 
+                            ref={dragHandleRef}
+                            className={`group relative w-full select-none transition-all duration-200 z-10 ${
                                 isDragging 
-                                    ? 'w-16 bg-slate-400' 
-                                    : 'w-12 bg-slate-300 hover:bg-slate-400'
-                            }`}></div>
-                        </div>
-                    </div>
-
-                    {/* Tabs and Cards Section */}
-                    <div className={`bg-slate-100 box-border content-stretch flex flex-col items-start justify-start pb-0 pt-0 px-0 relative w-full overflow-hidden transition-all duration-500 ease-out border-t border-slate-200 ${isGalleryExpanded ? 'flex-1 h-full' : 'flex-1'}`}>
-
-                                                            {/* Search and Actions Bar */}
-                    <div className={`bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full overflow-hidden transition-all duration-500 ease-out ${isGalleryExpanded ? 'opacity-100 max-h-[120px] min-h-[58px] py-3' : 'opacity-0 max-h-0 py-0'}`}>
-                        
-                        {/* Attach Button - Far Left */}
-                        <div className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 transition-colors duration-200 cursor-pointer">
-                            <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
-                            <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
-                                <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
-                                    <p className="block leading-[20px]">ATTACH</p>
-                                </div>
+                                    ? 'cursor-grabbing' 
+                                    : 'cursor-grab'
+                            } ${isGalleryExpanded ? 'py-2' : 'py-3'}`}
+                            onMouseDown={handleDragStart}
+                            onTouchStart={handleDragStart}
+                        >
+                            <div className="flex items-center justify-center">
+                                <div className={`h-1 rounded-full transition-all duration-200 ${
+                                    isDragging 
+                                        ? 'w-16 bg-slate-400' 
+                                        : 'w-12 bg-slate-300 hover:bg-slate-400'
+                                }`}></div>
                             </div>
                         </div>
-                        
-                        <div className="basis-0 grow h-full min-h-px min-w-px shrink-0 hidden lg:block"/>
-                        
-                        {/* Search, Filter Toggle, View Toggle, and Expand Button */}
-                        <div className="box-border content-stretch flex flex-row gap-2 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
+                    )}
+
+                                        {/* Tabs and Cards Section - Only show when there's any content or when we need to show the attach button */}
+                    <div className={`bg-slate-100 box-border content-stretch flex flex-col items-start justify-start pb-0 pt-0 px-0 relative w-full overflow-hidden transition-all duration-500 ease-out border-t border-slate-200 ${isGalleryExpanded && shouldShowContentArea ? 'flex-1 h-full' : shouldShowContentArea ? 'flex-1' : ''}`}>
+
+                        {/* Search and Actions Bar */}
+                        <div className="bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full py-3">
                             
-                            <div className={`bg-white relative rounded-full shrink-0 w-full lg:max-w-[300px] lg:w-[300px] border transition-all duration-200 ${searchFocused ? 'border-purple-800 shadow-sm' : 'border-slate-200'}`}>
-                                <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden px-3 py-2.5 relative w-full">
-                                    <div className="box-border content-stretch flex flex-row items-center justify-start pl-0 pr-2 py-0 relative shrink-0">
-                                        <Search className={`w-4 h-4 transition-colors duration-200 ${searchFocused || searchValue ? 'text-slate-950' : 'text-slate-950 opacity-50'}`} strokeWidth={2} />
+                            {/* Attach Button - Far Left */}
+                            <div 
+                                onClick={handleAttachCard}
+                                className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 transition-colors duration-200 cursor-pointer"
+                            >
+                                <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
+                                    <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
+                                        <p className="block leading-[20px]">ATTACH</p>
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={searchValue}
-                                        onChange={(e) => setSearchValue(e.target.value)}
-                                        onFocus={() => setSearchFocused(true)}
-                                        onBlur={() => setSearchFocused(false)}
-                                        placeholder="Search"
-                                        className="basis-0 font-hvd-regular grow h-5 leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[14px] text-left text-slate-950 bg-transparent border-0 outline-none placeholder:text-slate-950 placeholder:opacity-50"
-                                    />
-                                    {searchValue && (
-                                        <button
-                                            onClick={() => setSearchValue('')}
-                                            className="box-border content-stretch flex flex-row items-center justify-center pl-2 pr-0 py-0 relative shrink-0 hover:opacity-60 transition-opacity duration-200"
-                                        >
-                                            <X className="w-4 h-4 text-slate-950 opacity-40" strokeWidth={2} />
-                                        </button>
-                                    )}
                                 </div>
                             </div>
                             
-                            {/* Inline Segmented Filter Toggle - Animated */}
-                            <div className={`transition-all duration-300 ease-out origin-right ${
-                                showFilters 
-                                    ? 'max-w-[500px] opacity-100 scale-x-100' 
-                                    : 'max-w-0 opacity-0 scale-x-0'
-                            }`}>
-                                <div className={`bg-slate-200 box-border content-stretch flex flex-row items-center justify-start p-1 relative rounded-full shrink-0 whitespace-nowrap transition-all duration-300 ease-out origin-right ${
-                                    showFilters ? 'overflow-visible scale-x-100' : 'overflow-hidden scale-x-0'
-                                }`}>
-                                    {/* Hover indicator - behind active indicator */}
-                                    {hoveredFilter && hoveredFilter !== activeFilter && (
-                                        <div 
-                                            className="absolute bg-slate-300/50 h-[calc(100%-8px)] rounded-full transition-all duration-200 ease-out z-0"
-                                            style={{
-                                                width: `${hoverStyle.width}px`,
-                                                left: `${hoverStyle.left}px`,
-                                                top: '4px'
-                                            }}
-                                        />
-                                    )}
+                            <div className="basis-0 grow h-full min-h-px min-w-px shrink-0 hidden lg:block"/>
+                            
+                            {/* Search, Filter Toggle, View Toggle, and Expand Button - Only show when there's more than 1 item */}
+                            {visibleCards.length > 1 && (
+                                <div className="box-border content-stretch flex flex-row gap-2 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
                                     
-                                    {/* Active indicator - in front of hover */}
-                                    <div 
-                                        className={`absolute bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] h-[calc(100%-8px)] rounded-full z-10 ${
-                                            !isInitialFilterPosition && indicatorStyle.width > 0 ? 'transition-all duration-300 ease-out' : ''
-                                        }`}
-                                        style={{
-                                            width: `${indicatorStyle.width}px`,
-                                            left: `${indicatorStyle.left}px`,
-                                            top: '4px'
-                                        }}
-                                    />
+                                    <div className={`bg-white relative rounded-full shrink-0 w-full lg:max-w-[300px] lg:w-[300px] border transition-all duration-200 ${searchFocused ? 'border-purple-800 shadow-sm' : 'border-slate-200'}`}>
+                                        <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden px-3 py-2.5 relative w-full">
+                                            <div className="box-border content-stretch flex flex-row items-center justify-start pl-0 pr-2 py-0 relative shrink-0">
+                                                <Search className={`w-4 h-4 transition-colors duration-200 ${searchFocused || searchValue ? 'text-slate-950' : 'text-slate-950 opacity-50'}`} strokeWidth={2} />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={searchValue}
+                                                onChange={(e) => setSearchValue(e.target.value)}
+                                                onFocus={() => setSearchFocused(true)}
+                                                onBlur={() => setSearchFocused(false)}
+                                                placeholder="Search"
+                                                className="basis-0 font-hvd-regular grow h-5 leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[14px] text-left text-slate-950 bg-transparent border-0 outline-none placeholder:text-slate-950 placeholder:opacity-50"
+                                            />
+                                            {searchValue && (
+                                                <button
+                                                    onClick={() => setSearchValue('')}
+                                                    className="box-border content-stretch flex flex-row items-center justify-center pl-2 pr-0 py-0 relative shrink-0 hover:opacity-60 transition-opacity duration-200"
+                                                >
+                                                    <X className="w-4 h-4 text-slate-950 opacity-40" strokeWidth={2} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                     
-                                    {[
-                                        { key: 'all' as const, icon: CheckCheck, label: 'ALL' },
-                                        { key: 'cards' as const, icon: FileText, label: 'CARDS' },
-                                        { key: 'images' as const, icon: ImageIcon, label: 'IMAGES' },
-                                        { key: 'audio' as const, icon: FileAudio, label: 'AUDIO' },
-                                        { key: 'videos' as const, icon: FileVideo2, label: 'VIDEOS' }
-                                    ].map((filter, index) => {
-                                        const Icon = filter.icon;
-                                        const isActive = activeFilter === filter.key;
-                                        return (
-                                            <button
-                                                key={filter.key}
-                                                ref={(el) => { filterButtonRefs.current[index] = el; }}
-                                                onClick={() => setActiveFilter(filter.key)}
-                                                onMouseEnter={() => {
-                                                    setHoveredFilter(filter.key);
-                                                    updateHoverPosition(filter.key);
+                                    {/* Inline Segmented Filter Toggle - Animated */}
+                                    <div className={`transition-all duration-300 ease-out origin-right ${
+                                        showFilters 
+                                            ? 'max-w-[500px] opacity-100 scale-x-100' 
+                                            : 'max-w-0 opacity-0 scale-x-0'
+                                    }`}>
+                                        <div className={`bg-slate-200 box-border content-stretch flex flex-row items-center justify-start p-1 relative rounded-full shrink-0 whitespace-nowrap transition-all duration-300 ease-out origin-right ${
+                                            showFilters ? 'overflow-visible scale-x-100' : 'overflow-hidden scale-x-0'
+                                        }`}>
+                                            {/* Hover indicator - behind active indicator */}
+                                            {hoveredFilter && hoveredFilter !== activeFilter && (
+                                                <div 
+                                                    className="absolute bg-slate-300/50 h-[calc(100%-8px)] rounded-full transition-all duration-200 ease-out z-0"
+                                                    style={{
+                                                        width: `${hoverStyle.width}px`,
+                                                        left: `${hoverStyle.left}px`,
+                                                        top: '4px'
+                                                    }}
+                                                />
+                                            )}
+                                            
+                                            {/* Active indicator - in front of hover */}
+                                            <div 
+                                                className={`absolute bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] h-[calc(100%-8px)] rounded-full z-10 ${
+                                                    !isInitialFilterPosition && indicatorStyle.width > 0 ? 'transition-all duration-300 ease-out' : ''
+                                                }`}
+                                                style={{
+                                                    width: `${indicatorStyle.width}px`,
+                                                    left: `${indicatorStyle.left}px`,
+                                                    top: '4px'
                                                 }}
-                                                onMouseLeave={() => setHoveredFilter(null)}
-                                                className="box-border content-stretch flex flex-row gap-1 h-9 items-center justify-center min-w-14 px-3 py-1.5 relative rounded-full shrink-0 transition-all duration-200 z-20"
-                                            >
-                                                <Icon className={`w-5 h-5 transition-colors duration-300 ${
-                                                    isActive ? 'text-slate-950' : 'text-slate-500'
-                                                }`} strokeWidth={2} />
-                                                <div className={`basis-0 font-hvd-medium grow leading-[14px] min-h-px min-w-px not-italic relative shrink-0 text-[12px] text-center uppercase transition-colors duration-300 ${
-                                                    isActive ? 'text-slate-950' : 'text-slate-500'
-                                                }`}>
-                                                    <p className="block leading-[14px]">{filter.label}</p>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
+                                            />
+                                            
+                                            {[
+                                                { key: 'all' as const, icon: CheckCheck, label: 'ALL' },
+                                                { key: 'cards' as const, icon: FileText, label: 'CARDS' },
+                                                { key: 'images' as const, icon: ImageIcon, label: 'IMAGES' },
+                                                { key: 'audio' as const, icon: FileAudio, label: 'AUDIO' },
+                                                { key: 'videos' as const, icon: FileVideo2, label: 'VIDEOS' }
+                                            ].map((filter, index) => {
+                                                const Icon = filter.icon;
+                                                const isActive = activeFilter === filter.key;
+                                                return (
+                                                    <button
+                                                        key={filter.key}
+                                                        ref={(el) => { filterButtonRefs.current[index] = el; }}
+                                                        onClick={() => setActiveFilter(filter.key)}
+                                                        onMouseEnter={() => {
+                                                            setHoveredFilter(filter.key);
+                                                            updateHoverPosition(filter.key);
+                                                        }}
+                                                        onMouseLeave={() => setHoveredFilter(null)}
+                                                        className="box-border content-stretch flex flex-row gap-1 h-9 items-center justify-center min-w-14 px-3 py-1.5 relative rounded-full shrink-0 transition-all duration-200 z-20"
+                                                    >
+                                                        <Icon className={`w-5 h-5 transition-colors duration-300 ${
+                                                            isActive ? 'text-slate-950' : 'text-slate-500'
+                                                        }`} strokeWidth={2} />
+                                                        <div className={`basis-0 font-hvd-medium grow leading-[14px] min-h-px min-w-px not-italic relative shrink-0 text-[12px] text-center uppercase transition-colors duration-300 ${
+                                                            isActive ? 'text-slate-950' : 'text-slate-500'
+                                                        }`}>
+                                                            <p className="block leading-[14px]">{filter.label}</p>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Filter Toggle Button */}
+                                    <button
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 h-9 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-1.5 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                                        title={showFilters ? "Hide filters" : "Show filters"}
+                                    >
+                                        {showFilters ? (
+                                            <X className="w-4 h-4 text-purple-800 transition-colors duration-200" strokeWidth={2} />
+                                        ) : (
+                                            <Filter className="w-4 h-4 text-purple-800 transition-colors duration-200" strokeWidth={2} />
+                                        )}
+                                    </button>
+                                    
+                                    {/* View Mode Toggle Button */}
+                                    <button
+                                        onClick={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
+                                        className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 h-9 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-1.5 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                                        title={viewMode === 'card' ? "Switch to list view" : "Switch to card view"}
+                                    >
+                                        {viewMode === 'card' ? (
+                                            <List className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                        ) : (
+                                            <Grid3x3 className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                        )}
+                                    </button>
+                                    
+
                                 </div>
-                            </div>
-                            
-                            {/* Filter Toggle Button */}
-                            <button
-                                onClick={() => setShowFilters(!showFilters)}
-                                className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 h-9 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-1.5 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
-                                title={showFilters ? "Hide filters" : "Show filters"}
-                            >
-                                {showFilters ? (
-                                    <X className="w-4 h-4 text-purple-800 transition-colors duration-200" strokeWidth={2} />
-                                ) : (
-                                    <Filter className="w-4 h-4 text-purple-800 transition-colors duration-200" strokeWidth={2} />
-                                )}
-                            </button>
-                            
-                            {/* View Mode Toggle Button */}
-                            <button
-                                onClick={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
-                                className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 h-9 items-center justify-center min-w-20 sm:min-w-0 overflow-hidden px-3 sm:px-2.5 py-1.5 relative rounded-full shrink-0 w-full sm:w-auto transition-colors duration-200 cursor-pointer"
-                                title={viewMode === 'card' ? "Switch to list view" : "Switch to card view"}
-                            >
-                                {viewMode === 'card' ? (
-                                    <List className="w-4 h-4 text-purple-800" strokeWidth={2} />
-                                ) : (
-                                    <Grid3x3 className="w-4 h-4 text-purple-800" strokeWidth={2} />
-                                )}
-                            </button>
-                            
-
+                            )}
                         </div>
-                    </div>
 
-                    {/* Cards Grid / List View */}
-                    <div className={`relative flex-1 w-full min-w-0 overflow-y-auto ${!isGalleryExpanded ? 'max-h-[400px]' : ''}`} ref={cardsContainerRef}>
+                    {/* Cards Grid / List View - Only show when there's content to display */}
+                    {shouldShowContentArea ? (
+                        <div className={`relative flex-1 w-full min-w-0 overflow-y-auto ${!isGalleryExpanded ? 'max-h-[400px]' : ''}`} ref={cardsContainerRef}>
                         {/* Mobile scroll hint - only shown on mobile when gallery is not expanded */}
                         {isMobile && !isGalleryExpanded && visibleCards.length > 6 && (
                             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 bg-slate-800 text-white text-xs px-3 py-1 rounded-full opacity-60 pointer-events-none lg:hidden transition-opacity duration-300">
@@ -1592,7 +1651,7 @@ export default function CardComboModal() {
                         <div className="relative size-full min-w-0">
                             {viewMode === 'card' ? (
                                 /* Card Grid View */
-                                <div className={`box-border content-stretch grid gap-4 items-start justify-start relative w-full min-w-0 transition-all duration-300 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t-0 ${isGalleryExpanded ? 'pb-4 pt-16 px-3 sm:px-4' : 'pb-6 pt-6 px-3 sm:px-6'}`}>
+                                <div className={`box-border content-stretch grid gap-4 items-start justify-start relative w-full min-w-0 transition-all duration-300 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t-0 ${isGalleryExpanded ? 'pb-4 pt-4 px-3 sm:px-4' : 'pb-6 pt-6 px-3 sm:px-6'}`}>
                                     {visibleCards.map((card, _) => {
                                         // Find the original index in displayCards for proper card deletion tracking
                                         const originalIndex = displayCards.findIndex(c => c === card);
@@ -1624,7 +1683,7 @@ export default function CardComboModal() {
                                 </div>
                             ) : (
                                 /* List View */
-                                <div className={`relative w-full ${isGalleryExpanded ? 'pb-4 pt-16 px-3 sm:px-4' : 'pb-6 pt-6 px-3 sm:px-6'}`}>
+                                <div className={`relative w-full ${isGalleryExpanded ? 'pb-4 pt-4 px-3 sm:px-4' : 'pb-6 pt-6 px-3 sm:px-6'}`}>
                                     <div className="bg-white rounded-lg overflow-hidden border border-slate-200">
                                     {/* List Header */}
                                     <div className="bg-slate-50 border-b border-slate-200 px-4 py-3">
@@ -1663,10 +1722,10 @@ export default function CardComboModal() {
                                 </div>
                             )}
                         </div>
-                    </div>
+                        </div>
+                    ) : null}
                 </div>
                 </div>
-                )}
             </div>
             
 
