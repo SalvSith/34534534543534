@@ -1496,24 +1496,81 @@ export default function CardComboModal() {
                         {/* Search and Actions Bar */}
                         <div className="bg-slate-100 box-border content-stretch flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-start px-3 sm:px-6 relative shrink-0 w-full py-3">
                             
-                            {/* Attach Button - Far Left */}
-                            <div 
-                                onClick={handleAttachCard}
-                                className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 transition-colors duration-200 cursor-pointer"
-                            >
-                                <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
-                                <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
-                                    <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
-                                        <p className="block leading-[20px]">ATTACH</p>
+                            {/* Mobile Layout - Attach, Filter on left, Search on right */}
+                            <div className="lg:hidden flex flex-row gap-2 items-center justify-start w-full">
+                                {/* Attach Button - Left (Icon only) */}
+                                <button 
+                                    onClick={handleAttachCard}
+                                    className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex items-center justify-center w-10 h-10 relative rounded-full shrink-0 transition-colors duration-200 cursor-pointer"
+                                    title="Attach"
+                                >
+                                    <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                </button>
+                                
+                                {/* Filter Toggle Button - Left */}
+                                {visibleCards.length > 1 && (
+                                    <button
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex items-center justify-center w-10 h-10 relative rounded-full shrink-0 transition-colors duration-200 cursor-pointer"
+                                        title={showFilters ? "Hide filters" : "Show filters"}
+                                    >
+                                        {showFilters ? (
+                                            <X className="w-4 h-4 text-purple-800 transition-colors duration-200" strokeWidth={2} />
+                                        ) : (
+                                            <Filter className="w-4 h-4 text-purple-800 transition-colors duration-200" strokeWidth={2} />
+                                        )}
+                                    </button>
+                                )}
+                                
+                                {/* Search Bar - Right (takes remaining space) */}
+                                {visibleCards.length > 1 && (
+                                    <div className={`bg-white relative rounded-full flex-1 border transition-all duration-200 ${searchFocused ? 'border-purple-800 shadow-sm' : 'border-slate-200'}`}>
+                                        <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden px-3 py-2.5 relative w-full">
+                                            <div className="box-border content-stretch flex flex-row items-center justify-start pl-0 pr-2 py-0 relative shrink-0">
+                                                <Search className={`w-4 h-4 transition-colors duration-200 ${searchFocused || searchValue ? 'text-slate-950' : 'text-slate-950 opacity-50'}`} strokeWidth={2} />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={searchValue}
+                                                onChange={(e) => setSearchValue(e.target.value)}
+                                                onFocus={() => setSearchFocused(true)}
+                                                onBlur={() => setSearchFocused(false)}
+                                                placeholder="Search"
+                                                className="basis-0 font-hvd-regular grow h-5 leading-[20px] min-h-px min-w-px not-italic relative shrink-0 text-[14px] text-left text-slate-950 bg-transparent border-0 outline-none placeholder:text-slate-950 placeholder:opacity-50"
+                                            />
+                                            {searchValue && (
+                                                <button
+                                                    onClick={() => setSearchValue('')}
+                                                    className="box-border content-stretch flex flex-row items-center justify-center pl-2 pr-0 py-0 relative shrink-0 hover:opacity-60 transition-opacity duration-200"
+                                                >
+                                                    <X className="w-4 h-4 text-slate-950 opacity-40" strokeWidth={2} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                             
-                            <div className="basis-0 grow h-full min-h-px min-w-px shrink-0 hidden lg:block"/>
-                            
-                            {/* Search, Filter Toggle, View Toggle, and Expand Button - Only show when there's more than 1 item */}
-                            {visibleCards.length > 1 && (
-                                <div className="box-border content-stretch flex flex-row gap-2 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
+                            {/* Desktop Layout - Original */}
+                            <div className="hidden lg:flex lg:flex-row gap-4 items-center justify-start w-full">
+                                {/* Attach Button - Far Left */}
+                                <div 
+                                    onClick={handleAttachCard}
+                                    className="bg-slate-200 hover:bg-slate-300 box-border content-stretch flex flex-row gap-1 items-center justify-center min-w-20 overflow-hidden px-3 py-2 relative rounded-full shrink-0 transition-colors duration-200 cursor-pointer"
+                                >
+                                    <Paperclip className="w-4 h-4 text-purple-800" strokeWidth={2} />
+                                    <div className="box-border content-stretch flex flex-row items-start justify-start px-1 py-0 relative shrink-0">
+                                        <div className="font-hvd-bold leading-[20px] not-italic relative shrink-0 text-[12px] text-left text-purple-800 uppercase">
+                                            <p className="block leading-[20px]">ATTACH</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="basis-0 grow h-full min-h-px min-w-px shrink-0"/>
+                                
+                                {/* Search, Filter Toggle, View Toggle, and Expand Button - Only show when there's more than 1 item */}
+                                {visibleCards.length > 1 && (
+                                    <div className="box-border content-stretch flex flex-row gap-2 items-center justify-start p-0 relative shrink-0 w-full lg:w-auto">
                                     
                                     <div className={`bg-white relative rounded-full shrink-0 w-full lg:max-w-[300px] lg:w-[300px] border transition-all duration-200 ${searchFocused ? 'border-purple-800 shadow-sm' : 'border-slate-200'}`}>
                                         <div className="box-border content-stretch flex flex-row items-center justify-start overflow-hidden px-3 py-2.5 relative w-full">
@@ -1635,9 +1692,57 @@ export default function CardComboModal() {
                                     </button>
                                     
 
-                                </div>
-                            )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Mobile Filter Section - Only show on mobile when filters are enabled */}
+                        {showFilters && visibleCards.length > 1 && (
+                            <div className="lg:hidden bg-slate-100 pb-3 px-6" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+                                <div className="bg-slate-200 rounded-full p-1 relative overflow-hidden">
+                                    {/* Active indicator - same as desktop */}
+                                    <div 
+                                        className="absolute bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] h-[calc(100%-8px)] rounded-full z-10 transition-all duration-300 ease-out"
+                                        style={{
+                                            width: 'calc(20% - 2px)',
+                                            left: `calc(${(['all', 'cards', 'images', 'audio', 'videos'].indexOf(activeFilter) * 20)}% + 1px)`,
+                                            top: '4px'
+                                        }}
+                                    />
+                                    
+                                    <div className="flex relative z-20">
+                                        {[
+                                            { key: 'all' as const, icon: CheckCheck, label: 'ALL' },
+                                            { key: 'cards' as const, icon: FileText, label: 'CARDS' },
+                                            { key: 'images' as const, icon: ImageIcon, label: 'IMAGES' },
+                                            { key: 'audio' as const, icon: FileAudio, label: 'AUDIO' },
+                                            { key: 'videos' as const, icon: FileVideo2, label: 'VIDEOS' }
+                                        ].map((filter, index) => {
+                                            const Icon = filter.icon;
+                                            const isActive = activeFilter === filter.key;
+                                            
+                                            return (
+                                                <button
+                                                    key={filter.key}
+                                                    onClick={() => setActiveFilter(filter.key)}
+                                                    className="flex flex-row gap-1 h-9 items-center justify-center px-3 py-1.5 relative rounded-full flex-1 transition-all duration-200"
+                                                >
+                                                    <Icon className={`w-5 h-5 transition-colors duration-300 ${
+                                                        isActive ? 'text-slate-950' : 'text-slate-500'
+                                                    }`} strokeWidth={2} />
+                                                    <div className={`font-hvd-medium leading-[14px] text-[12px] text-center uppercase transition-colors duration-300 ${
+                                                        isActive ? 'text-slate-950' : 'text-slate-500'
+                                                    }`}>
+                                                        <p className="block leading-[14px]">{filter.label}</p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                     {/* Cards Grid / List View - Only show when there's content to display */}
                     {shouldShowContentArea ? (
