@@ -1045,25 +1045,7 @@ export default function CardComboModal() {
         }
     };
 
-    // Update mobile indicator position
-    const updateMobileIndicatorPosition = () => {
-        const filterKeys = ['all', 'cards', 'images', 'audio', 'videos'];
-        const activeIndex = filterKeys.indexOf(activeFilter);
-        const activeButton = mobileFilterButtonRefs.current[activeIndex];
-        
-        if (activeButton) {
-            const containerRect = activeButton.parentElement?.getBoundingClientRect();
-            const buttonRect = activeButton.getBoundingClientRect();
-            
-            if (containerRect && buttonRect.width > 0) {
-                setMobileIndicatorStyle({
-                    width: buttonRect.width,
-                    left: buttonRect.left - containerRect.left
-                });
-                setIsInitialMobileFilterPosition(false);
-            }
-        }
-    };
+
 
     // Drag event handlers
     const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
