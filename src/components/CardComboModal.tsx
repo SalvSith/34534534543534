@@ -1015,6 +1015,10 @@ export default function CardComboModal() {
                 handleDragMove(e);
             };
             const handleTouchMove = (e: TouchEvent) => {
+                // On mobile, prevent default to stop page scrolling during drag
+                if (isMobile) {
+                    e.preventDefault();
+                }
                 handleDragMove(e);
             };
             const handleMouseUp = (e: MouseEvent) => {
@@ -1025,9 +1029,9 @@ export default function CardComboModal() {
             };
             const handleTouchEnd = () => handleDragEnd();
 
-            // Use normal phase, not capture, to avoid interfering with other components
+            // Use passive for desktop mouse events, non-passive for mobile touch events
             document.addEventListener('mousemove', handleMouseMove, { passive: true });
-            document.addEventListener('touchmove', handleTouchMove, { passive: true });
+            document.addEventListener('touchmove', handleTouchMove, { passive: !isMobile });
             document.addEventListener('mouseup', handleMouseUp);
             document.addEventListener('touchend', handleTouchEnd);
 
@@ -1038,7 +1042,7 @@ export default function CardComboModal() {
                 document.removeEventListener('touchend', handleTouchEnd);
             };
         }
-    }, [isDragging, dragStartY]);
+    }, [isDragging, dragStartY, isMobile]);
 
 
 
@@ -1371,7 +1375,7 @@ export default function CardComboModal() {
                             )}
                             
                             {/* Text Content */}
-                            <div className={`flex flex-col gap-4 items-start justify-start p-0 relative transition-all duration-500 ease-out w-full min-h-[100px] max-h-[200px] md:max-h-none md:min-h-0 overflow-y-auto md:overflow-y-visible md:basis-0 md:shrink-0 ${coverImageUrl && !isGalleryExpanded ? 'lg:grow lg:min-h-px lg:min-w-px lg:self-stretch' : ''}`}>
+                            <div className={`flex flex-col gap-4 items-start justify-start p-0 relative transition-all duration-500 ease-out w-full min-h-[150px] max-h-[300px] md:max-h-none md:min-h-0 overflow-y-auto md:overflow-y-visible md:basis-0 md:shrink-0 ${coverImageUrl && !isGalleryExpanded ? 'lg:grow lg:min-h-px lg:min-w-px lg:self-stretch' : ''}`}>
                                 <div className="font-hvd-regular leading-[24px] w-full not-italic opacity-80 relative shrink-0 text-[16px] text-left text-slate-950">
                                     <p className="block leading-[24px]">{`A diverse group of mystical characters, each with their own unique abilities and wisdom. From graceful Witcher Elves to battle-hardened warriors, they navigate the mystical realms with ease.`}</p>
                                     <br/>
