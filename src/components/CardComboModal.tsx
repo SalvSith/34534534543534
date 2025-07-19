@@ -101,7 +101,11 @@ function HoverTooltip({ children, title = "Heroes Collection", description = "A 
     const [isVisible, setIsVisible] = useState(false);
     const [isHoveringTooltip, setIsHoveringTooltip] = useState(false);
     const [tooltipCampaignActive, setTooltipCampaignActive] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const [tooltipPosition, setTooltipPosition] = useState({ transform: '-translate-x-1/2' });
     const timeoutRef = useRef<number | null>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
 
     const handleMouseEnter = () => {
         if (disabled) return;
@@ -136,6 +140,55 @@ function HoverTooltip({ children, title = "Heroes Collection", description = "A 
         }, 100);
     };
 
+    // Mobile detection
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Position calculation for mobile
+    useEffect(() => {
+        if (isVisible && isMobile && tooltipRef.current && triggerRef.current) {
+            // Small delay to ensure tooltip is rendered and positioned
+            const timeoutId = setTimeout(() => {
+                if (tooltipRef.current && triggerRef.current) {
+                    const triggerRect = triggerRef.current.getBoundingClientRect();
+                    const viewportWidth = window.innerWidth;
+                    const tooltipWidth = 176; // Fixed width from the component
+                    
+                    // Calculate ideal center position
+                    const idealLeft = triggerRect.left + (triggerRect.width / 2) - (tooltipWidth / 2);
+                    
+                    // Check if tooltip would go off screen
+                    const padding = 16; // 1rem padding from edges
+                    let transform = 'translateX(-50%)';
+                    
+                    if (idealLeft < padding) {
+                        // Too far left, align to left edge with padding
+                        const offset = padding - idealLeft;
+                        transform = `translateX(calc(-50% + ${offset}px))`;
+                    } else if (idealLeft + tooltipWidth > viewportWidth - padding) {
+                        // Too far right, align to right edge with padding
+                        const offset = (idealLeft + tooltipWidth) - (viewportWidth - padding);
+                        transform = `translateX(calc(-50% - ${offset}px))`;
+                    }
+                    
+                    setTooltipPosition({ transform });
+                }
+            }, 10);
+            
+            return () => clearTimeout(timeoutId);
+        } else {
+            // Default centering for desktop or when not visible
+            setTooltipPosition({ transform: 'translateX(-50%)' });
+        }
+    }, [isVisible, isMobile]);
+
     useEffect(() => {
         return () => {
             if (timeoutRef.current) {
@@ -158,6 +211,7 @@ function HoverTooltip({ children, title = "Heroes Collection", description = "A 
 
     return (
         <div 
+            ref={triggerRef}
             className="relative inline-block"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -165,7 +219,9 @@ function HoverTooltip({ children, title = "Heroes Collection", description = "A 
             {children}
             {isVisible && (
                 <div 
-                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-[9999] pointer-events-auto"
+                    ref={tooltipRef}
+                    className="absolute bottom-full left-1/2 mb-2 z-[9999] pointer-events-auto"
+                    style={{ transform: tooltipPosition.transform }}
                     onMouseEnter={handleTooltipEnter}
                     onMouseLeave={handleTooltipLeave}
                 >
@@ -821,10 +877,13 @@ export default function CardComboModal() {
     const ellipsisButtonRef = useRef<HTMLDivElement>(null);
     const cardsContainerRef = useRef<HTMLDivElement>(null);
     const filterButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const mobileFilterButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const [indicatorStyle, setIndicatorStyle] = useState({ width: 0, left: 0 });
+    const [mobileIndicatorStyle, setMobileIndicatorStyle] = useState({ width: 0, left: 0 });
     const [hoveredFilter, setHoveredFilter] = useState<string | null>(null);
     const [hoverStyle, setHoverStyle] = useState({ width: 0, left: 0 });
     const [isInitialFilterPosition, setIsInitialFilterPosition] = useState(true);
+    const [isInitialMobileFilterPosition, setIsInitialMobileFilterPosition] = useState(true);
 
 
 
@@ -834,6 +893,7 @@ export default function CardComboModal() {
     const [dragOffset, setDragOffset] = useState(0);
     const [dragMovement, setDragMovement] = useState(0);
     const dragHandleRef = useRef<HTMLDivElement>(null);
+    const touchActiveRef = useRef(false);
 
     // Check if device is mobile (screen width < 1024px which is the lg breakpoint)
     const [isMobile, setIsMobile] = useState(false);
@@ -892,19 +952,69 @@ export default function CardComboModal() {
         }
     }, [showFilters]);
 
+    // Update mobile indicator position when active filter changes or filters open
+    useEffect(() => {
+        const updatePosition = () => {
+            const filterKeys = ['all', 'cards', 'images', 'audio', 'videos'];
+            const activeIndex = filterKeys.indexOf(activeFilter);
+            const activeButton = mobileFilterButtonRefs.current[activeIndex];
+            
+            if (activeButton) {
+                const containerRect = activeButton.parentElement?.getBoundingClientRect();
+                const buttonRect = activeButton.getBoundingClientRect();
+                
+                if (containerRect && buttonRect.width > 0) {
+                    setMobileIndicatorStyle({
+                        width: buttonRect.width,
+                        left: buttonRect.left - containerRect.left
+                    });
+                    setIsInitialMobileFilterPosition(false);
+                }
+            }
+        };
+
+        if (!showFilters) {
+            // Reset when filters are hidden
+            setIsInitialMobileFilterPosition(true);
+            return;
+        }
+
+        // For initial positioning when filters first open, use longer delay to ensure DOM is ready
+        // For subsequent filter changes, use short delay
+        const delay = isInitialMobileFilterPosition ? 350 : 10;
+        const timeoutId = setTimeout(updatePosition, delay);
+        
+        return () => clearTimeout(timeoutId);
+    }, [activeFilter, showFilters, isInitialMobileFilterPosition]);
+
     // Also update on window resize
     useEffect(() => {
         const handleResize = () => {
             const filterKeys = ['all', 'cards', 'images', 'audio', 'videos'];
             const activeIndex = filterKeys.indexOf(activeFilter);
-            const activeButton = filterButtonRefs.current[activeIndex];
             
+            // Update desktop indicator
+            const activeButton = filterButtonRefs.current[activeIndex];
             if (activeButton && showFilters) {
                 const containerRect = activeButton.parentElement?.getBoundingClientRect();
                 const buttonRect = activeButton.getBoundingClientRect();
                 
                 if (containerRect) {
                     setIndicatorStyle({
+                        width: buttonRect.width,
+                        left: buttonRect.left - containerRect.left
+                    });
+                }
+            }
+            
+            // Update mobile indicator
+            const mobileActiveButton = mobileFilterButtonRefs.current[activeIndex];
+            if (mobileActiveButton && showFilters) {
+                const containerRect = mobileActiveButton.parentElement?.getBoundingClientRect();
+                const buttonRect = mobileActiveButton.getBoundingClientRect();
+                
+                if (containerRect) {
+                    setMobileIndicatorStyle({
                         width: buttonRect.width,
                         left: buttonRect.left - containerRect.left
                     });
@@ -935,6 +1045,26 @@ export default function CardComboModal() {
         }
     };
 
+    // Update mobile indicator position
+    const updateMobileIndicatorPosition = () => {
+        const filterKeys = ['all', 'cards', 'images', 'audio', 'videos'];
+        const activeIndex = filterKeys.indexOf(activeFilter);
+        const activeButton = mobileFilterButtonRefs.current[activeIndex];
+        
+        if (activeButton) {
+            const containerRect = activeButton.parentElement?.getBoundingClientRect();
+            const buttonRect = activeButton.getBoundingClientRect();
+            
+            if (containerRect && buttonRect.width > 0) {
+                setMobileIndicatorStyle({
+                    width: buttonRect.width,
+                    left: buttonRect.left - containerRect.left
+                });
+                setIsInitialMobileFilterPosition(false);
+            }
+        }
+    };
+
     // Drag event handlers
     const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
         // Don't allow dragging if there's no content to display
@@ -946,7 +1076,13 @@ export default function CardComboModal() {
         // Ensure this event is specifically from the drag handle
         if (!dragHandleRef.current?.contains(e.target as Node)) return;
         
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        // Track if this is a touch event
+        const isTouch = 'touches' in e;
+        if (isTouch) {
+            touchActiveRef.current = true;
+        }
+        
+        const clientY = isTouch ? e.touches[0].clientY : e.clientY;
         setIsDragging(true);
         setDragStartY(clientY);
         setDragOffset(0);
@@ -958,6 +1094,29 @@ export default function CardComboModal() {
         
         // Only set user-select none during actual dragging
         document.body.style.userSelect = 'none';
+    };
+
+    // Handle direct tap/click on mobile as fallback
+    const handleDirectClick = (e: React.MouseEvent) => {
+        // Only handle direct clicks when not dragging and on mobile
+        if (isDragging || !isMobile) return;
+        
+        // Don't handle if touch events are active (avoid double handling)
+        if (touchActiveRef.current) return;
+        
+        // Don't allow clicking if there's no content to display
+        if (!shouldShowContentArea) return;
+        
+        // Ensure this event is specifically from the drag handle
+        if (!dragHandleRef.current?.contains(e.target as Node)) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Small delay to avoid conflicts with touch events on mobile
+        setTimeout(() => {
+            setIsGalleryExpanded(prev => !prev);
+        }, 50);
     };
 
     const handleDragMove = (e: MouseEvent | TouchEvent) => {
@@ -995,9 +1154,23 @@ export default function CardComboModal() {
         setDragOffset(0);
         document.body.style.userSelect = '';
         
-        // Handle click to toggle tray
+        // Handle click to toggle tray - use setTimeout for mobile touch events
         if (wasClick) {
-            setIsGalleryExpanded(!isGalleryExpanded);
+            // Small delay for mobile to ensure touch events complete properly
+            if (isMobile) {
+                setTimeout(() => {
+                    setIsGalleryExpanded(prev => !prev);
+                    // Clear touch active flag after a delay
+                    setTimeout(() => {
+                        touchActiveRef.current = false;
+                    }, 100);
+                }, 10);
+            } else {
+                setIsGalleryExpanded(prev => !prev);
+            }
+        } else {
+            // Clear touch active flag for non-click drags
+            touchActiveRef.current = false;
         }
     };
 
@@ -1027,19 +1200,33 @@ export default function CardComboModal() {
                     handleDragEnd();
                 }
             };
-            const handleTouchEnd = () => handleDragEnd();
+            const handleTouchEnd = (e: TouchEvent) => {
+                // Ensure touch end is handled properly
+                e.preventDefault();
+                handleDragEnd();
+            };
 
             // Use passive for desktop mouse events, non-passive for mobile touch events
             document.addEventListener('mousemove', handleMouseMove, { passive: true });
             document.addEventListener('touchmove', handleTouchMove, { passive: !isMobile });
             document.addEventListener('mouseup', handleMouseUp);
-            document.addEventListener('touchend', handleTouchEnd);
+            document.addEventListener('touchend', handleTouchEnd, { passive: false });
+            
+            // Also listen for touchcancel as a fallback
+            const handleTouchCancel = () => {
+                setIsDragging(false);
+                setDragOffset(0);
+                document.body.style.userSelect = '';
+                touchActiveRef.current = false;
+            };
+            document.addEventListener('touchcancel', handleTouchCancel);
 
             return () => {
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('touchmove', handleTouchMove);
                 document.removeEventListener('mouseup', handleMouseUp);
                 document.removeEventListener('touchend', handleTouchEnd);
+                document.removeEventListener('touchcancel', handleTouchCancel);
             };
         }
     }, [isDragging, dragStartY, isMobile]);
@@ -1483,6 +1670,7 @@ export default function CardComboModal() {
                             } ${isGalleryExpanded ? 'py-2' : 'py-3'}`}
                             onMouseDown={handleDragStart}
                             onTouchStart={handleDragStart}
+                            onClick={handleDirectClick}
                         >
                             <div className="flex items-center justify-center">
                                 <div className={`h-1 rounded-full transition-all duration-200 ${
@@ -1701,48 +1889,57 @@ export default function CardComboModal() {
                             </div>
                         </div>
 
-                        {/* Mobile Filter Section - Only show on mobile when filters are enabled */}
-                        {showFilters && visibleCards.length > 1 && (
-                            <div className="lg:hidden bg-slate-100 pb-3 px-6" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
-                                <div className="bg-slate-200 rounded-full p-1 relative overflow-hidden">
-                                    {/* Active indicator - same as desktop */}
-                                    <div 
-                                        className="absolute bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] h-[calc(100%-8px)] rounded-full z-10 transition-all duration-300 ease-out"
-                                        style={{
-                                            width: 'calc(20% - 2px)',
-                                            left: `calc(${(['all', 'cards', 'images', 'audio', 'videos'].indexOf(activeFilter) * 20)}% + 1px)`,
-                                            top: '4px'
-                                        }}
-                                    />
-                                    
-                                    <div className="flex relative z-20">
-                                        {[
-                                            { key: 'all' as const, icon: CheckCheck, label: 'ALL' },
-                                            { key: 'cards' as const, icon: FileText, label: 'CARDS' },
-                                            { key: 'images' as const, icon: ImageIcon, label: 'IMAGES' },
-                                            { key: 'audio' as const, icon: FileAudio, label: 'AUDIO' },
-                                            { key: 'videos' as const, icon: FileVideo2, label: 'VIDEOS' }
-                                        ].map((filter) => {
-                                            const Icon = filter.icon;
-                                            const isActive = activeFilter === filter.key;
-                                            
-                                            return (
-                                                <button
-                                                    key={filter.key}
-                                                    onClick={() => setActiveFilter(filter.key)}
-                                                    className="flex flex-row gap-1 h-9 items-center justify-center px-3 py-1.5 relative rounded-full flex-1 transition-all duration-200"
-                                                >
-                                                    <Icon className={`w-5 h-5 transition-colors duration-300 ${
-                                                        isActive ? 'text-slate-950' : 'text-slate-500'
-                                                    }`} strokeWidth={2} />
-                                                    <div className={`font-hvd-medium leading-[14px] text-[12px] text-center uppercase transition-colors duration-300 ${
-                                                        isActive ? 'text-slate-950' : 'text-slate-500'
-                                                    }`}>
-                                                        <p className="block leading-[14px]">{filter.label}</p>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
+                        {/* Mobile Filter Section - Animated show/hide on mobile when filters are enabled */}
+                        {visibleCards.length > 1 && (
+                            <div className={`lg:hidden bg-slate-100 transition-all duration-300 ease-out overflow-hidden ${
+                                showFilters 
+                                    ? 'max-h-[80px] opacity-100 pb-3' 
+                                    : 'max-h-0 opacity-0 pb-0'
+                            }`} style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+                                <div className="px-6 transition-all duration-300 ease-out">
+                                    <div className="bg-slate-200 rounded-full p-1 relative overflow-hidden">
+                                        {/* Active indicator - calculated positioning */}
+                                        <div 
+                                            className={`absolute bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] h-[calc(100%-8px)] rounded-full z-10 ${
+                                                !isInitialMobileFilterPosition && mobileIndicatorStyle.width > 0 ? 'transition-all duration-300 ease-out' : ''
+                                            }`}
+                                            style={{
+                                                width: `${mobileIndicatorStyle.width}px`,
+                                                left: `${mobileIndicatorStyle.left}px`,
+                                                top: '4px'
+                                            }}
+                                        />
+                                        
+                                        <div className="flex relative z-20">
+                                            {[
+                                                { key: 'all' as const, icon: CheckCheck, label: 'ALL' },
+                                                { key: 'cards' as const, icon: FileText, label: 'CARDS' },
+                                                { key: 'images' as const, icon: ImageIcon, label: 'IMAGES' },
+                                                { key: 'audio' as const, icon: FileAudio, label: 'AUDIO' },
+                                                { key: 'videos' as const, icon: FileVideo2, label: 'VIDEOS' }
+                                            ].map((filter, index) => {
+                                                const Icon = filter.icon;
+                                                const isActive = activeFilter === filter.key;
+                                                
+                                                return (
+                                                    <button
+                                                        key={filter.key}
+                                                        ref={(el) => { mobileFilterButtonRefs.current[index] = el; }}
+                                                        onClick={() => setActiveFilter(filter.key)}
+                                                        className="flex flex-row gap-1 h-9 items-center justify-center px-3 py-1.5 relative rounded-full flex-1 transition-all duration-200"
+                                                    >
+                                                        <Icon className={`w-5 h-5 transition-colors duration-300 ${
+                                                            isActive ? 'text-slate-950' : 'text-slate-500'
+                                                        }`} strokeWidth={2} />
+                                                        <div className={`font-hvd-medium leading-[14px] text-[12px] text-center uppercase transition-colors duration-300 ${
+                                                            isActive ? 'text-slate-950' : 'text-slate-500'
+                                                        }`}>
+                                                            <p className="block leading-[14px]">{filter.label}</p>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
