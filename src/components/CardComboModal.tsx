@@ -1718,7 +1718,7 @@ export default function CardComboModal() {
                                             { key: 'images' as const, icon: ImageIcon, label: 'IMAGES' },
                                             { key: 'audio' as const, icon: FileAudio, label: 'AUDIO' },
                                             { key: 'videos' as const, icon: FileVideo2, label: 'VIDEOS' }
-                                        ].map((filter, index) => {
+                                        ].map((filter) => {
                                             const Icon = filter.icon;
                                             const isActive = activeFilter === filter.key;
                                             
